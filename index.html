@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LGS Performans Analizi - Sınıf Bazlı</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            color: white;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: rgba(255,255,255,0.9);
+            font-size: 1.2em;
+            margin-bottom: 30px;
+        }
+        
+        .controls {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            margin-bottom: 30px;
+        }
+        
+        .filter-section {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .filter-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .filter-group label {
+            font-weight: bold;
+            color: #333;
+            font-size: 1em;
+        }
+        
+        .class-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .class-btn {
+            padding: 10px 25px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1em;
+            transition: all 0.3s;
+        }
+        
+        .class-btn:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .class-btn.active {
+            background: #667eea;
+            color: white;
+        }
+        
+        .student-selector select {
+            padding: 12px 20px;
+            font-size: 1em;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            min-width: 300px;
+            transition: all 0.3s;
+        }
+        
+        .student-selector select:hover {
+            border-color: #764ba2;
+            box-shadow: 0 0 10px rgba(102, 126, 234, 0.3);
+        }
+        
+        .student-info {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 1.3em;
+        }
+        
+        .student-info strong {
+            font-size: 1.3em;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+            transition: transform 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        }
+        
+        .stat-card.turkce::before { background: #e74c3c; }
+        .stat-card.matematik::before { background: #3498db; }
+        .stat-card.fen::before { background: #2ecc71; }
+        .stat-card.sosyal::before { background: #f39c12; }
+        .stat-card.ingilizce::before { background: #9b59b6; }
+        .stat-card.din::before { background: #1abc9c; }
+        
+        .stat-emoji {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .stat-title {
+            font-size: 1em;
+            color: #666;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        
+        .stat-percentage {
+            font-size: 3em;
+            font-weight: bold;
+            margin-bottom: 5px;
+            line-height: 1;
+        }
+        
+        .stat-card.turkce .stat-percentage { color: #e74c3c; }
+        .stat-card.matematik .stat-percentage { color: #3498db; }
+        .stat-card.fen .stat-percentage { color: #2ecc71; }
+        .stat-card.sosyal .stat-percentage { color: #f39c12; }
+        .stat-card.ingilizce .stat-percentage { color: #9b59b6; }
+        .stat-card.din .stat-percentage { color: #1abc9c; }
+        
+        .stat-detail {
+            font-size: 0.9em;
+            color: #999;
+            margin-bottom: 10px;
+        }
+        
+        .progress-bar {
+            background: #ecf0f1;
+            height: 12px;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            border-radius: 6px;
+            transition: width 0.8s ease;
+        }
+        
+        .stat-card.turkce .progress-fill { background: linear-gradient(90deg, #e74c3c, #c0392b); }
+        .stat-card.matematik .progress-fill { background: linear-gradient(90deg, #3498db, #2980b9); }
+        .stat-card.fen .progress-fill { background: linear-gradient(90deg, #2ecc71, #27ae60); }
+        .stat-card.sosyal .progress-fill { background: linear-gradient(90deg, #f39c12, #e67e22); }
+        .stat-card.ingilizce .progress-fill { background: linear-gradient(90deg, #9b59b6, #8e44ad); }
+        .stat-card.din .progress-fill { background: linear-gradient(90deg, #1abc9c, #16a085); }
+        
+        .charts-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .chart-card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .chart-title {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .comparison-section {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+        }
+        
+        .insights {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .insight-item {
+            padding: 20px;
+            margin: 15px 0;
+            border-left: 5px solid #667eea;
+            background: linear-gradient(90deg, #f8f9fa 0%, white 100%);
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+        
+        .insight-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .insight-item strong {
+            color: #667eea;
+            font-size: 1.1em;
+        }
+        
+        .insight-item em {
+            color: #666;
+            display: block;
+            margin-top: 8px;
+            font-style: normal;
+            padding-left: 20px;
+        }
+        
+        /* MODAL */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        .modal-overlay.open { display: flex; align-items: flex-start; justify-content: center; }
+
+        .modal {
+            background: white;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 1100px;
+            margin: auto;
+            overflow: hidden;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.5);
+            animation: slideIn 0.3s ease;
+        }
+        @keyframes slideIn {
+            from { transform: translateY(-30px); opacity: 0; }
+            to   { transform: translateY(0);     opacity: 1; }
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 30px 35px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .modal-header h2 { color: white; font-size: 1.8em; margin: 0; }
+        .modal-header .meta { color: rgba(255,255,255,0.85); font-size: 1em; margin-top: 5px; }
+
+        .modal-close {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            font-size: 1.6em;
+            width: 44px; height: 44px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .modal-close:hover { background: rgba(255,255,255,0.35); }
+
+        .modal-body { padding: 30px 35px; }
+
+        .profile-charts-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .profile-chart-card {
+            background: #f8f9fa;
+            border-radius: 14px;
+            padding: 20px;
+            border-top: 4px solid #ddd;
+        }
+        .profile-chart-card.turkce    { border-top-color: #e74c3c; }
+        .profile-chart-card.matematik { border-top-color: #3498db; }
+        .profile-chart-card.fen       { border-top-color: #2ecc71; }
+        .profile-chart-card.sosyal    { border-top-color: #f39c12; }
+        .profile-chart-card.ingilizce { border-top-color: #9b59b6; }
+        .profile-chart-card.din       { border-top-color: #1abc9c; }
+        .profile-chart-card h4 {
+            text-align: center;
+            font-size: 1em;
+            margin-bottom: 12px;
+            font-weight: 700;
+        }
+        .profile-chart-card.turkce h4    { color: #e74c3c; }
+        .profile-chart-card.matematik h4 { color: #3498db; }
+        .profile-chart-card.fen h4       { color: #2ecc71; }
+        .profile-chart-card.sosyal h4    { color: #f39c12; }
+        .profile-chart-card.ingilizce h4 { color: #9b59b6; }
+        .profile-chart-card.din h4       { color: #1abc9c; }
+
+        .profile-stat-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8em;
+            color: #666;
+            margin-top: 8px;
+        }
+        .profile-stat-row strong { color: #333; }
+
+        @media (max-width: 768px) {
+            .profile-charts-grid { grid-template-columns: 1fr 1fr; }
+            .charts-container {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 1.8em;
+            }
+            
+            .filter-section {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .student-selector select {
+                min-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- PROFİL MODAL -->
+    <div class="modal-overlay" id="profileModal">
+        <div class="modal">
+            <div class="modal-header">
+                <div>
+                    <h2 id="modalStudentName">👤 Öğrenci Profili</h2>
+                    <div class="meta" id="modalStudentMeta"></div>
+                </div>
+                <button class="modal-close" onclick="closeProfile()">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="profile-charts-grid" id="profileChartsGrid"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h1>🎯 LGS Performans Analizi</h1>
+        <div class="subtitle">Sınıf Bazlı Detaylı Öğrenci Takibi - Yüzdelik Başarı Gösterimi</div>
+        
+        <div class="controls">
+            <div class="filter-section">
+                <div class="filter-group">
+                    <label>🏫 Sınıf:</label>
+                    <div class="class-buttons">
+                        <button class="class-btn class-filter-btn active" data-class="ALL">Tümü</button>
+                        <button class="class-btn class-filter-btn" data-class="8A">8-A</button>
+                        <button class="class-btn class-filter-btn" data-class="8B">8-B</button>
+                    </div>
+                </div>
+                
+                <div class="filter-group" style="margin-left: 20px;">
+                    <label>💪 Gelişim Fırsatı:</label>
+                    <div class="class-buttons">
+                        <button class="class-btn weak-filter-btn active" data-subject="NONE">Hepsi</button>
+                        <button class="class-btn weak-filter-btn" data-subject="turkce">Türkçe</button>
+                        <button class="class-btn weak-filter-btn" data-subject="matematik">Mat</button>
+                        <button class="class-btn weak-filter-btn" data-subject="fen">Fen</button>
+                        <button class="class-btn weak-filter-btn" data-subject="sosyal">Sos</button>
+                        <button class="class-btn weak-filter-btn" data-subject="ingilizce">İng</button>
+                        <button class="class-btn weak-filter-btn" data-subject="din">Din</button>
+                    </div>
+                </div>
+                
+                <div class="filter-group student-selector" style="margin-left: 20px;">
+                    <label for="studentSelect">👨‍🎓 Öğrenci:</label>
+                    <select id="studentSelect" onchange="updateDashboard()">
+                    </select>
+                </div>
+            </div>
+            
+            <div class="student-info" id="studentInfo"></div>
+        </div>
+        
+        <div class="stats-grid" id="statsGrid"></div>
+        
+        <div class="charts-container">
+            <div class="chart-card">
+                <h3 class="chart-title">📊 Ders Bazında Yüzdelik Başarı</h3>
+                <canvas id="subjectChart"></canvas>
+            </div>
+            
+            <div class="chart-card">
+                <h3 class="chart-title">📈 Sınav Bazında Gelişim Trendi (%)</h3>
+                <p style="text-align: center; color: #666; margin-bottom: 15px; font-size: 0.9em;">
+                    💡 <strong>İpucu:</strong> Bir derse odaklanmak için ders adına tıklayın, diğerleri soluklaşacak. Tekrar tıklayın, hepsi geri gelecek.
+                </p>
+                <canvas id="trendChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="comparison-section">
+            <h3 class="chart-title">🎯 Hedef Başarı Karşılaştırması</h3>
+            <canvas id="targetChart"></canvas>
+        </div>
+        
+        <div class="insights" id="insights">
+            <h3 class="chart-title">💡 Öğrenci Analizi ve Öneriler</h3>
+            <div id="insightContent"></div>
+        </div>
+    </div>
+    
+    <script>
+        const allStudentsData = [{"name": "Ada Su  SEZGİN", "class": "8A", "turkce_full": [8.0, 10.67, 10.67, 8.0, 10.67, null, 6.67, 5.33, 12.0, 12.0, null, null, 10.67, 8.0, 8.0, 5.33, null, 14.67, 8.0, 10.67, 9.33], "matematik_full": [8.0, 10.67, 2.67, 6.67, -5.33, null, 6.33, 0.0, 8.0, 7.67, null, null, 5.67, 6.33, 0.0, 3.33, null, 12.33, 4.0, -1.0, 6.33], "fen_full": [2.67, 8.0, 0.0, 9.33, 2.67, null, 9.33, 7.0, 8.0, 10.67, null, null, 4.33, 10.67, 1.33, 4.33, null, 12.0, 8.0, 9.33, 5.67], "sosyal_full": [4.67, 8.67, 4.67, 4.67, 0.67, null, 3.33, 4.67, 7.33, 3.33, null, null, 2.0, 2.0, 2.0, 3.33, null, 2.0, 8.67, 3.33, 0.67], "ingilizce_full": [-0.67, 2.0, 7.33, 8.67, 7.67, null, 6.0, 7.33, 8.67, 6.0, null, null, 6.0, 8.67, 0.67, 8.67, null, 4.67, 10.0, 7.33, 7.33], "din_full": [0.67, 3.33, 6.0, 2.0, 4.67, null, 3.33, 7.33, 7.33, 3.33, null, null, 4.67, 6.0, 3.33, -0.67, null, 4.67, 7.33, 3.33, 7.33], "turkce": [8.0, 10.67, 10.67, 8.0, 10.67, 6.67, 5.33, 12.0, 12.0, 10.67, 8.0, 8.0, 5.33, 14.67, 8.0, 10.67, 9.33], "matematik": [8.0, 10.67, 2.67, 6.67, -5.33, 6.33, 0.0, 8.0, 7.67, 5.67, 6.33, 0.0, 3.33, 12.33, 4.0, -1.0, 6.33], "fen": [2.67, 8.0, 0.0, 9.33, 2.67, 9.33, 7.0, 8.0, 10.67, 4.33, 10.67, 1.33, 4.33, 12.0, 8.0, 9.33, 5.67], "sosyal": [4.67, 8.67, 4.67, 4.67, 0.67, 3.33, 4.67, 7.33, 3.33, 2.0, 2.0, 2.0, 3.33, 2.0, 8.67, 3.33, 0.67], "ingilizce": [-0.67, 2.0, 7.33, 8.67, 7.67, 6.0, 7.33, 8.67, 6.0, 6.0, 8.67, 0.67, 8.67, 4.67, 10.0, 7.33, 7.33], "din": [0.67, 3.33, 6.0, 2.0, 4.67, 3.33, 7.33, 7.33, 3.33, 4.67, 6.0, 3.33, -0.67, 4.67, 7.33, 3.33, 7.33], "turkce_ort": 9.334117647058825, "matematik_ort": 4.804117647058824, "fen_ort": 6.666470588235294, "sosyal_ort": 3.8829411764705886, "ingilizce_ort": 6.2552941176470584, "din_ort": 4.351764705882353, "turkce_yuzde": 46.670588235294126, "matematik_yuzde": 24.02058823529412, "fen_yuzde": 33.33235294117647, "sosyal_yuzde": 38.82941176470588, "ingilizce_yuzde": 62.55294117647059, "din_yuzde": 43.51764705882353}, {"name": "Ahmet DİNERİ", "class": "8A", "turkce_full": [14.67, 17.33, 16.0, 18.67, 17.33, null, 18.67, 18.67, 17.33, 17.33, null, null, 17.33, null, 17.33, 16.0, 13.33, 16.0, 20.0, 17.33, 16.0], "matematik_full": [18.67, 18.67, 20.0, 12.67, 18.67, null, 17.67, 18.67, 17.67, 20.0, null, null, 20.0, null, 16.0, 15.33, 17.33, 18.67, 14.67, 13.0, 14.0], "fen_full": [17.33, 20.0, 16.0, 13.67, 17.33, null, 17.33, 17.33, 14.67, 20.0, null, null, 13.33, null, 13.33, 9.33, 20.0, 17.33, 20.0, 17.33, 18.67], "sosyal_full": [10.0, 8.67, 8.67, 8.67, 10.0, null, 10.0, 10.0, 10.0, 7.33, null, null, 10.0, null, 8.67, 7.33, 8.67, 8.67, 8.67, 10.0, 10.0], "ingilizce_full": [8.67, 7.33, 8.67, 10.0, 10.0, null, 7.33, 7.33, 10.0, 10.0, null, null, 8.67, null, 8.67, 10.0, 8.67, 10.0, 10.0, 8.67, 9.0], "din_full": [7.33, 8.67, 8.67, 10.0, 8.67, null, 10.0, 10.0, 7.33, 8.67, null, null, 8.67, null, 10.0, 8.67, 10.0, 7.33, 8.67, 10.0, 7.33], "turkce": [14.67, 17.33, 16.0, 18.67, 17.33, 18.67, 18.67, 17.33, 17.33, 17.33, 17.33, 16.0, 13.33, 16.0, 20.0, 17.33, 16.0], "matematik": [18.67, 18.67, 20.0, 12.67, 18.67, 17.67, 18.67, 17.67, 20.0, 20.0, 16.0, 15.33, 17.33, 18.67, 14.67, 13.0, 14.0], "fen": [17.33, 20.0, 16.0, 13.67, 17.33, 17.33, 17.33, 14.67, 20.0, 13.33, 13.33, 9.33, 20.0, 17.33, 20.0, 17.33, 18.67], "sosyal": [10.0, 8.67, 8.67, 8.67, 10.0, 10.0, 10.0, 10.0, 7.33, 10.0, 8.67, 7.33, 8.67, 8.67, 8.67, 10.0, 10.0], "ingilizce": [8.67, 7.33, 8.67, 10.0, 10.0, 7.33, 7.33, 10.0, 10.0, 8.67, 8.67, 10.0, 8.67, 10.0, 10.0, 8.67, 9.0], "din": [7.33, 8.67, 8.67, 10.0, 8.67, 10.0, 10.0, 7.33, 8.67, 8.67, 10.0, 8.67, 10.0, 7.33, 8.67, 10.0, 7.33], "turkce_ort": 17.018823529411765, "matematik_ort": 17.15823529411765, "fen_ort": 16.64588235294118, "sosyal_ort": 9.13823529411765, "ingilizce_ort": 9.000588235294117, "din_ort": 8.824117647058825, "turkce_yuzde": 85.09411764705884, "matematik_yuzde": 85.79117647058825, "fen_yuzde": 83.2294117647059, "sosyal_yuzde": 91.38235294117649, "ingilizce_yuzde": 90.00588235294117, "din_yuzde": 88.24117647058826}, {"name": "Azra ERASLAN", "class": "8A", "turkce_full": [16.0, 18.67, 16.0, 17.33, 17.33, null, 16.0, 16.0, 14.67, 14.67, null, null, 17.33, 18.67, 14.67, 13.33, 13.33, 14.67, 16.0, 18.67, 18.67], "matematik_full": [11.33, 17.33, 8.0, 15.0, 6.67, null, 12.67, 13.0, 14.0, 19.0, null, null, 15.0, 9.67, 10.67, 11.0, 14.67, 14.0, 12.33, 9.67, 4.67], "fen_full": [14.67, 15.0, 9.33, 16.0, 10.67, null, 18.67, 13.33, 13.33, 13.33, null, null, 13.33, 13.33, 13.33, 12.0, 17.33, 12.0, 16.0, 18.67, 13.33], "sosyal_full": [3.33, 7.33, 8.67, 6.0, 3.33, null, 8.67, 8.67, 3.33, 7.33, null, null, 6.0, 4.67, 2.0, 2.0, 7.33, 6.0, 7.33, 8.67, 7.33], "ingilizce_full": [8.67, 7.33, 8.67, 8.67, 10.0, null, 10.0, 10.0, 10.0, 8.67, null, null, 10.0, 8.67, 10.0, 10.0, 8.67, 8.67, 10.0, 10.0, 10.0], "din_full": [3.33, 6.0, 4.67, 8.67, 7.33, null, 6.0, 7.33, 6.0, 6.0, null, null, 10.0, 7.33, 8.67, 7.33, 7.33, 6.0, 10.0, 7.33, 10.0], "turkce": [16.0, 18.67, 16.0, 17.33, 17.33, 16.0, 16.0, 14.67, 14.67, 17.33, 18.67, 14.67, 13.33, 13.33, 14.67, 16.0, 18.67, 18.67], "matematik": [11.33, 17.33, 8.0, 15.0, 6.67, 12.67, 13.0, 14.0, 19.0, 15.0, 9.67, 10.67, 11.0, 14.67, 14.0, 12.33, 9.67, 4.67], "fen": [14.67, 15.0, 9.33, 16.0, 10.67, 18.67, 13.33, 13.33, 13.33, 13.33, 13.33, 13.33, 12.0, 17.33, 12.0, 16.0, 18.67, 13.33], "sosyal": [3.33, 7.33, 8.67, 6.0, 3.33, 8.67, 8.67, 3.33, 7.33, 6.0, 4.67, 2.0, 2.0, 7.33, 6.0, 7.33, 8.67, 7.33], "ingilizce": [8.67, 7.33, 8.67, 8.67, 10.0, 10.0, 10.0, 10.0, 8.67, 10.0, 8.67, 10.0, 10.0, 8.67, 8.67, 10.0, 10.0, 10.0], "din": [3.33, 6.0, 4.67, 8.67, 7.33, 6.0, 7.33, 6.0, 6.0, 10.0, 7.33, 8.67, 7.33, 7.33, 6.0, 10.0, 7.33, 10.0], "turkce_ort": 16.22277777777778, "matematik_ort": 12.148888888888887, "fen_ort": 14.091666666666667, "sosyal_ort": 5.999444444444444, "ingilizce_ort": 9.334444444444445, "din_ort": 7.184444444444444, "turkce_yuzde": 81.1138888888889, "matematik_yuzde": 60.74444444444443, "fen_yuzde": 70.45833333333333, "sosyal_yuzde": 59.99444444444444, "ingilizce_yuzde": 93.34444444444445, "din_yuzde": 71.84444444444445}, {"name": "Beren YILDIZ", "class": "8A", "turkce_full": [18.67, 18.67, 20.0, 20.0, 18.67, 16.0, 18.67, 17.33, 17.33, 17.33, 13.33, null, 20.0, 20.0, 18.67, 16.0, 14.67, 14.67, 18.67, 20.0, 16.0], "matematik_full": [17.33, 20.0, 18.67, 17.33, 18.67, 18.67, 20.0, 20.0, 18.67, 18.67, 20.0, null, 20.0, 19.0, 18.67, 16.67, 20.0, 17.33, 17.33, 16.0, 12.67], "fen_full": [16.0, 20.0, 16.0, 16.0, 20.0, 18.67, 17.33, 18.67, 16.0, 20.0, 13.33, null, 18.67, 14.67, 17.33, 14.67, 20.0, 18.67, 20.0, 20.0, 20.0], "sosyal_full": [10.0, 8.67, 6.0, 8.67, 8.67, 8.67, 10.0, 8.67, 9.0, 10.0, 7.33, null, 8.67, 6.0, 8.67, 8.67, 8.67, 8.67, 7.33, 8.67, 8.67], "ingilizce_full": [8.67, 8.67, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 8.67, 10.0, null, 10.0, 8.67, 10.0, 10.0, 10.0, 8.67, 10.0, 10.0, 8.67], "din_full": [8.67, 7.33, 10.0, 8.67, 10.0, 7.33, 10.0, 8.67, 10.0, 10.0, 8.67, null, 7.33, 7.33, 7.33, 8.67, 8.67, 7.33, 10.0, 8.67, 10.0], "turkce": [18.67, 18.67, 20.0, 20.0, 18.67, 16.0, 18.67, 17.33, 17.33, 17.33, 13.33, 20.0, 20.0, 18.67, 16.0, 14.67, 14.67, 18.67, 20.0, 16.0], "matematik": [17.33, 20.0, 18.67, 17.33, 18.67, 18.67, 20.0, 20.0, 18.67, 18.67, 20.0, 20.0, 19.0, 18.67, 16.67, 20.0, 17.33, 17.33, 16.0, 12.67], "fen": [16.0, 20.0, 16.0, 16.0, 20.0, 18.67, 17.33, 18.67, 16.0, 20.0, 13.33, 18.67, 14.67, 17.33, 14.67, 20.0, 18.67, 20.0, 20.0, 20.0], "sosyal": [10.0, 8.67, 6.0, 8.67, 8.67, 8.67, 10.0, 8.67, 9.0, 10.0, 7.33, 8.67, 6.0, 8.67, 8.67, 8.67, 8.67, 7.33, 8.67, 8.67], "ingilizce": [8.67, 8.67, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 8.67, 10.0, 10.0, 8.67, 10.0, 10.0, 10.0, 8.67, 10.0, 10.0, 8.67], "din": [8.67, 7.33, 10.0, 8.67, 10.0, 7.33, 10.0, 8.67, 10.0, 10.0, 8.67, 7.33, 7.33, 7.33, 8.67, 8.67, 7.33, 10.0, 8.67, 10.0], "turkce_ort": 17.734, "matematik_ort": 18.284, "fen_ort": 17.800500000000003, "sosyal_ort": 8.485, "ingilizce_ort": 9.600999999999999, "din_ort": 8.733500000000001, "turkce_yuzde": 88.67, "matematik_yuzde": 91.41999999999999, "fen_yuzde": 89.00250000000001, "sosyal_yuzde": 84.85, "ingilizce_yuzde": 96.00999999999999, "din_yuzde": 87.33500000000001}, {"name": "Ceyla Meryem ÇIKMAZ", "class": "8A", "turkce_full": [16.0, 13.67, 18.67, 17.33, 16.0, 14.67, 18.67, 18.67, 15.0, 14.67, null, null, 18.67, 16.0, 17.33, 12.0, 9.67, 13.33, 18.67, 17.33, 18.67], "matematik_full": [10.67, 17.33, 15.0, 14.67, 11.0, 18.67, 14.67, 14.67, 16.0, 17.33, null, null, 16.0, 16.0, 13.33, 8.0, 20.0, 18.67, 16.0, 10.67, 11.33], "fen_full": [17.33, 17.33, 13.33, 14.67, 16.0, 16.0, 14.67, 13.33, 9.33, 17.33, null, null, 14.67, 17.33, 17.33, 12.0, 17.33, 17.33, 16.0, 17.33, 16.0], "sosyal_full": [10.0, 9.0, 7.33, 8.67, 8.67, 8.67, 8.67, 10.0, 8.67, 8.67, null, null, 10.0, 4.67, 8.67, 8.67, 8.67, 8.67, 7.33, 10.0, 8.67], "ingilizce_full": [10.0, 10.0, 10.0, 10.0, 10.0, 8.67, 10.0, 10.0, 10.0, 10.0, null, null, 10.0, 10.0, 7.33, 10.0, 8.67, 10.0, 10.0, 10.0, 10.0], "din_full": [6.0, 10.0, 10.0, 10.0, 8.67, 6.0, 8.67, 8.67, 8.67, 10.0, null, null, 7.33, 4.67, 8.67, 10.0, 8.67, 7.33, 7.33, 8.67, 10.0], "turkce": [16.0, 13.67, 18.67, 17.33, 16.0, 14.67, 18.67, 18.67, 15.0, 14.67, 18.67, 16.0, 17.33, 12.0, 9.67, 13.33, 18.67, 17.33, 18.67], "matematik": [10.67, 17.33, 15.0, 14.67, 11.0, 18.67, 14.67, 14.67, 16.0, 17.33, 16.0, 16.0, 13.33, 8.0, 20.0, 18.67, 16.0, 10.67, 11.33], "fen": [17.33, 17.33, 13.33, 14.67, 16.0, 16.0, 14.67, 13.33, 9.33, 17.33, 14.67, 17.33, 17.33, 12.0, 17.33, 17.33, 16.0, 17.33, 16.0], "sosyal": [10.0, 9.0, 7.33, 8.67, 8.67, 8.67, 8.67, 10.0, 8.67, 8.67, 10.0, 4.67, 8.67, 8.67, 8.67, 8.67, 7.33, 10.0, 8.67], "ingilizce": [10.0, 10.0, 10.0, 10.0, 10.0, 8.67, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 7.33, 10.0, 8.67, 10.0, 10.0, 10.0, 10.0], "din": [6.0, 10.0, 10.0, 10.0, 8.67, 6.0, 8.67, 8.67, 8.67, 10.0, 7.33, 4.67, 8.67, 10.0, 8.67, 7.33, 7.33, 8.67, 10.0], "turkce_ort": 16.053684210526313, "matematik_ort": 14.737368421052631, "fen_ort": 15.50736842105263, "sosyal_ort": 8.61578947368421, "ingilizce_ort": 9.719473684210527, "din_ort": 8.38684210526316, "turkce_yuzde": 80.26842105263157, "matematik_yuzde": 73.68684210526315, "fen_yuzde": 77.53684210526315, "sosyal_yuzde": 86.1578947368421, "ingilizce_yuzde": 97.19473684210527, "din_yuzde": 83.86842105263159}, {"name": "Efe  BURNUKARA", "class": "8A", "turkce_full": [16.0, 18.67, 17.33, 18.67, 20.0, 18.67, 16.0, 20.0, 16.0, 17.33, 18.67, null, 17.33, null, 18.67, 14.67, 10.67, 17.33, 20.0, 20.0, 18.67], "matematik_full": [14.67, 20.0, 14.67, 16.0, 17.33, 17.33, 17.33, 16.0, 13.33, 18.67, 18.67, null, 17.33, null, 10.67, 15.33, 18.67, 15.33, 13.67, 13.33, 13.0], "fen_full": [17.33, 18.67, 14.67, 16.0, 16.0, 17.33, 14.67, 16.0, 14.67, 18.67, 18.67, null, 12.0, null, 16.0, 13.67, 18.67, 16.0, 17.33, 20.0, 17.33], "sosyal_full": [10.0, 8.67, 6.0, 8.67, 8.67, 10.0, 8.67, 8.67, 7.33, 8.67, 8.67, null, 8.67, null, 10.0, 10.0, 6.0, 7.33, 10.0, 10.0, 7.33], "ingilizce_full": [4.67, 10.0, 6.0, 8.67, 10.0, 7.33, 7.33, 10.0, 10.0, 10.0, 10.0, null, 8.67, null, 7.33, 8.67, 8.67, 8.67, 10.0, 10.0, 10.0], "din_full": [8.67, 8.67, 10.0, 10.0, 10.0, 8.67, 10.0, 10.0, 8.67, 10.0, 8.67, null, 10.0, null, 10.0, 8.67, 7.33, 8.67, 7.33, 7.33, 8.67], "turkce": [16.0, 18.67, 17.33, 18.67, 20.0, 18.67, 16.0, 20.0, 16.0, 17.33, 18.67, 17.33, 18.67, 14.67, 10.67, 17.33, 20.0, 20.0, 18.67], "matematik": [14.67, 20.0, 14.67, 16.0, 17.33, 17.33, 17.33, 16.0, 13.33, 18.67, 18.67, 17.33, 10.67, 15.33, 18.67, 15.33, 13.67, 13.33, 13.0], "fen": [17.33, 18.67, 14.67, 16.0, 16.0, 17.33, 14.67, 16.0, 14.67, 18.67, 18.67, 12.0, 16.0, 13.67, 18.67, 16.0, 17.33, 20.0, 17.33], "sosyal": [10.0, 8.67, 6.0, 8.67, 8.67, 10.0, 8.67, 8.67, 7.33, 8.67, 8.67, 8.67, 10.0, 10.0, 6.0, 7.33, 10.0, 10.0, 7.33], "ingilizce": [4.67, 10.0, 6.0, 8.67, 10.0, 7.33, 7.33, 10.0, 10.0, 10.0, 10.0, 8.67, 7.33, 8.67, 8.67, 8.67, 10.0, 10.0, 10.0], "din": [8.67, 8.67, 10.0, 10.0, 10.0, 8.67, 10.0, 10.0, 8.67, 10.0, 8.67, 10.0, 10.0, 8.67, 7.33, 8.67, 7.33, 7.33, 8.67], "turkce_ort": 17.614736842105263, "matematik_ort": 15.859473684210526, "fen_ort": 16.509473684210523, "sosyal_ort": 8.597368421052632, "ingilizce_ort": 8.737368421052631, "din_ort": 9.018421052631581, "turkce_yuzde": 88.07368421052631, "matematik_yuzde": 79.29736842105262, "fen_yuzde": 82.54736842105261, "sosyal_yuzde": 85.97368421052633, "ingilizce_yuzde": 87.37368421052632, "din_yuzde": 90.18421052631581}, {"name": "Esma AKINAL", "class": "8A", "turkce_full": [20.0, 18.67, 20.0, 17.33, 20.0, 20.0, 18.67, 18.67, 17.33, 17.33, 20.0, null, 18.67, 16.0, 20.0, 14.67, 17.33, 17.33, 18.67, 18.67, 20.0], "matematik_full": [13.33, 16.33, 12.33, 8.67, 12.0, 11.67, 15.33, 15.67, 14.0, 16.67, 13.67, null, 14.67, 14.0, 11.33, 8.33, 8.67, 17.67, 10.33, 8.67, 5.33], "fen_full": [20.0, 12.0, 16.0, 20.0, 13.33, 14.67, 17.33, 17.33, 14.67, 20.0, 18.67, null, 12.0, 16.0, 18.67, 12.0, 17.33, 14.67, 14.67, 17.33, 17.33], "sosyal_full": [10.0, 10.0, 8.67, 10.0, 10.0, 10.0, 10.0, 10.0, 8.67, 10.0, 7.33, null, 10.0, 6.0, 10.0, 7.33, 7.33, 8.67, 6.0, 10.0, 10.0], "ingilizce_full": [10.0, 10.0, 8.67, 10.0, 10.0, 10.0, 8.67, 10.0, 7.33, 10.0, 10.0, null, 10.0, 8.67, 8.67, 8.67, 10.0, 10.0, 10.0, 10.0, 10.0], "din_full": [7.33, 8.67, 10.0, 10.0, 8.67, 8.67, 7.33, 10.0, 7.33, 7.33, 8.67, null, 8.67, 6.0, 8.67, 8.67, 10.0, 7.67, 8.67, 10.0, 8.67], "turkce": [20.0, 18.67, 20.0, 17.33, 20.0, 20.0, 18.67, 18.67, 17.33, 17.33, 20.0, 18.67, 16.0, 20.0, 14.67, 17.33, 17.33, 18.67, 18.67, 20.0], "matematik": [13.33, 16.33, 12.33, 8.67, 12.0, 11.67, 15.33, 15.67, 14.0, 16.67, 13.67, 14.67, 14.0, 11.33, 8.33, 8.67, 17.67, 10.33, 8.67, 5.33], "fen": [20.0, 12.0, 16.0, 20.0, 13.33, 14.67, 17.33, 17.33, 14.67, 20.0, 18.67, 12.0, 16.0, 18.67, 12.0, 17.33, 14.67, 14.67, 17.33, 17.33], "sosyal": [10.0, 10.0, 8.67, 10.0, 10.0, 10.0, 10.0, 10.0, 8.67, 10.0, 7.33, 10.0, 6.0, 10.0, 7.33, 7.33, 8.67, 6.0, 10.0, 10.0], "ingilizce": [10.0, 10.0, 8.67, 10.0, 10.0, 10.0, 8.67, 10.0, 7.33, 10.0, 10.0, 10.0, 8.67, 8.67, 8.67, 10.0, 10.0, 10.0, 10.0, 10.0], "din": [7.33, 8.67, 10.0, 10.0, 8.67, 8.67, 7.33, 10.0, 7.33, 7.33, 8.67, 8.67, 6.0, 8.67, 8.67, 10.0, 7.67, 8.67, 10.0, 8.67], "turkce_ort": 18.467, "matematik_ort": 12.433500000000002, "fen_ort": 16.2, "sosyal_ort": 8.999999999999998, "ingilizce_ort": 9.534, "din_ort": 8.550999999999998, "turkce_yuzde": 92.335, "matematik_yuzde": 62.16750000000001, "fen_yuzde": 81.0, "sosyal_yuzde": 89.99999999999999, "ingilizce_yuzde": 95.34, "din_yuzde": 85.50999999999999}, {"name": "Güneş ÖZER", "class": "8A", "turkce_full": [18.67, 18.67, 20.0, 18.67, 18.67, 17.33, 17.33, 20.0, 17.33, 17.33, 20.0, null, 18.67, 18.67, 16.0, 14.67, 12.0, 20.0, 18.67, 20.0, 18.67], "matematik_full": [14.67, 17.33, 16.0, 16.33, 17.67, 18.67, 16.0, 18.67, 16.0, 16.0, 17.33, null, 17.33, 16.0, 13.33, 14.0, 17.33, 16.0, 12.33, 15.67, 13.67], "fen_full": [16.0, 17.33, 16.0, 17.33, 18.67, 17.33, 18.67, 17.33, 20.0, 16.0, 18.67, null, 20.0, 17.33, 16.0, 15.0, 17.33, 16.0, 20.0, 20.0, 18.67], "sosyal_full": [10.0, 10.0, 8.67, 7.33, 6.0, 10.0, 10.0, 10.0, 4.67, 10.0, 7.33, null, 8.67, 8.67, 8.67, 10.0, 10.0, 8.67, 10.0, 8.67, 7.33], "ingilizce_full": [10.0, 10.0, 8.67, 10.0, 10.0, 8.67, 8.67, 7.33, 10.0, 8.67, 10.0, null, 8.67, 8.67, 7.33, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0], "din_full": [6.0, 10.0, 8.67, 10.0, 10.0, 10.0, 8.67, 10.0, 8.67, 7.33, 10.0, null, 10.0, 10.0, 10.0, 10.0, 10.0, 7.33, 8.67, 10.0, 10.0], "turkce": [18.67, 18.67, 20.0, 18.67, 18.67, 17.33, 17.33, 20.0, 17.33, 17.33, 20.0, 18.67, 18.67, 16.0, 14.67, 12.0, 20.0, 18.67, 20.0, 18.67], "matematik": [14.67, 17.33, 16.0, 16.33, 17.67, 18.67, 16.0, 18.67, 16.0, 16.0, 17.33, 17.33, 16.0, 13.33, 14.0, 17.33, 16.0, 12.33, 15.67, 13.67], "fen": [16.0, 17.33, 16.0, 17.33, 18.67, 17.33, 18.67, 17.33, 20.0, 16.0, 18.67, 20.0, 17.33, 16.0, 15.0, 17.33, 16.0, 20.0, 20.0, 18.67], "sosyal": [10.0, 10.0, 8.67, 7.33, 6.0, 10.0, 10.0, 10.0, 4.67, 10.0, 7.33, 8.67, 8.67, 8.67, 10.0, 10.0, 8.67, 10.0, 8.67, 7.33], "ingilizce": [10.0, 10.0, 8.67, 10.0, 10.0, 8.67, 8.67, 7.33, 10.0, 8.67, 10.0, 8.67, 8.67, 7.33, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0], "din": [6.0, 10.0, 8.67, 10.0, 10.0, 10.0, 8.67, 10.0, 8.67, 7.33, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 7.33, 8.67, 10.0, 10.0], "turkce_ort": 18.067500000000003, "matematik_ort": 16.0165, "fen_ort": 17.683, "sosyal_ort": 8.733999999999998, "ingilizce_ort": 9.334, "din_ort": 9.267, "turkce_yuzde": 90.33750000000002, "matematik_yuzde": 80.0825, "fen_yuzde": 88.41499999999999, "sosyal_yuzde": 87.33999999999999, "ingilizce_yuzde": 93.34, "din_yuzde": 92.67}, {"name": "Kerim Mustafa HAYIRLIGİL", "class": "8A", "turkce_full": [13.33, 12.0, 13.67, 17.33, 12.67, null, 11.33, 14.67, null, 13.67, 13.67, null, 19.0, null, 12.33, 11.0, 8.67, 12.0, 16.0, 18.67, 13.33], "matematik_full": [8.33, 12.67, 9.67, 9.67, 11.33, null, 6.67, 9.0, null, 6.33, 8.33, null, 10.0, null, 6.33, 2.67, 4.33, 3.33, 5.0, 1.0, 3.33], "fen_full": [13.33, 15.0, 7.0, 7.33, 7.0, null, 8.67, 7.0, null, 4.67, 8.33, null, 13.67, null, 10.33, 6.0, 6.0, 10.0, 9.0, 13.67, 6.0], "sosyal_full": [10.0, 7.33, 6.0, 8.67, 8.67, null, 7.67, 8.67, null, 6.0, 7.33, null, 6.0, null, 8.67, 8.67, 7.33, 7.33, 10.0, 8.67, 8.67], "ingilizce_full": [3.67, 8.67, 8.67, 6.0, 7.33, null, 2.67, 8.67, null, 8.67, 10.0, null, 7.33, null, 1.33, 10.0, 7.33, 10.0, 10.0, 8.67, 10.0], "din_full": [7.33, 10.0, 8.67, 10.0, 7.33, null, 6.0, 10.0, null, 7.33, 7.33, null, 7.33, null, 10.0, 8.67, 7.33, 6.0, 6.0, 7.33, 10.0], "turkce": [13.33, 12.0, 13.67, 17.33, 12.67, 11.33, 14.67, 13.67, 13.67, 19.0, 12.33, 11.0, 8.67, 12.0, 16.0, 18.67, 13.33], "matematik": [8.33, 12.67, 9.67, 9.67, 11.33, 6.67, 9.0, 6.33, 8.33, 10.0, 6.33, 2.67, 4.33, 3.33, 5.0, 1.0, 3.33], "fen": [13.33, 15.0, 7.0, 7.33, 7.0, 8.67, 7.0, 4.67, 8.33, 13.67, 10.33, 6.0, 6.0, 10.0, 9.0, 13.67, 6.0], "sosyal": [10.0, 7.33, 6.0, 8.67, 8.67, 7.67, 8.67, 6.0, 7.33, 6.0, 8.67, 8.67, 7.33, 7.33, 10.0, 8.67, 8.67], "ingilizce": [3.67, 8.67, 8.67, 6.0, 7.33, 2.67, 8.67, 8.67, 10.0, 7.33, 1.33, 10.0, 7.33, 10.0, 10.0, 8.67, 10.0], "din": [7.33, 10.0, 8.67, 10.0, 7.33, 6.0, 10.0, 7.33, 7.33, 7.33, 10.0, 8.67, 7.33, 6.0, 6.0, 7.33, 10.0], "turkce_ort": 13.725882352941177, "matematik_ort": 6.9405882352941175, "fen_ort": 9.0, "sosyal_ort": 7.981176470588234, "ingilizce_ort": 7.588823529411764, "din_ort": 8.038235294117648, "turkce_yuzde": 68.62941176470588, "matematik_yuzde": 34.70294117647059, "fen_yuzde": 45.0, "sosyal_yuzde": 79.81176470588234, "ingilizce_yuzde": 75.88823529411764, "din_yuzde": 80.38235294117648}, {"name": "Mira TEPE", "class": "8A", "turkce_full": [15.0, 12.33, 14.67, null, 13.67, null, 16.0, 13.33, 12.33, 13.33, 12.33, null, 17.33, null, 10.67, 14.67, 4.67, 13.33, 8.33, 14.67, 17.67], "matematik_full": [11.33, 11.33, 5.0, null, 6.0, null, -0.67, 4.33, 1.67, 7.67, 5.67, null, 11.33, null, 7.33, 6.33, 2.67, 4.67, 4.0, 5.33, 3.33], "fen_full": [7.0, 11.0, 8.67, null, 9.67, null, 10.67, 6.67, 8.0, 6.0, 11.33, null, 11.33, null, 13.67, 6.67, 6.33, 7.0, 3.0, 12.33, 10.67], "sosyal_full": [8.67, 8.67, 10.0, null, 8.67, null, 8.67, 7.33, 6.0, 4.67, 4.67, null, 7.33, null, 7.33, 6.33, 6.33, 8.67, 7.33, 8.67, 8.67], "ingilizce_full": [7.33, 7.33, 7.33, null, 10.0, null, 3.33, 7.33, 7.33, 7.33, 8.67, null, 8.67, null, 8.67, 10.0, 9.0, 8.67, 10.0, 10.0, 10.0], "din_full": [8.67, 8.67, 8.67, null, 7.33, null, 7.33, 6.0, 6.33, 6.33, 6.0, null, 7.33, null, 10.0, 3.33, 9.0, 7.67, 8.67, 6.0, 8.67], "turkce": [15.0, 12.33, 14.67, 13.67, 16.0, 13.33, 12.33, 13.33, 12.33, 17.33, 10.67, 14.67, 4.67, 13.33, 8.33, 14.67, 17.67], "matematik": [11.33, 11.33, 5.0, 6.0, -0.67, 4.33, 1.67, 7.67, 5.67, 11.33, 7.33, 6.33, 2.67, 4.67, 4.0, 5.33, 3.33], "fen": [7.0, 11.0, 8.67, 9.67, 10.67, 6.67, 8.0, 6.0, 11.33, 11.33, 13.67, 6.67, 6.33, 7.0, 3.0, 12.33, 10.67], "sosyal": [8.67, 8.67, 10.0, 8.67, 8.67, 7.33, 6.0, 4.67, 4.67, 7.33, 7.33, 6.33, 6.33, 8.67, 7.33, 8.67, 8.67], "ingilizce": [7.33, 7.33, 7.33, 10.0, 3.33, 7.33, 7.33, 7.33, 8.67, 8.67, 8.67, 10.0, 9.0, 8.67, 10.0, 10.0, 10.0], "din": [8.67, 8.67, 8.67, 7.33, 7.33, 6.0, 6.33, 6.33, 6.0, 7.33, 10.0, 3.33, 9.0, 7.67, 8.67, 6.0, 8.67], "turkce_ort": 13.195882352941176, "matematik_ort": 5.724705882352941, "fen_ort": 8.824117647058824, "sosyal_ort": 7.529999999999999, "ingilizce_ort": 8.293529411764707, "din_ort": 7.411764705882353, "turkce_yuzde": 65.97941176470587, "matematik_yuzde": 28.623529411764704, "fen_yuzde": 44.120588235294115, "sosyal_yuzde": 75.29999999999998, "ingilizce_yuzde": 82.93529411764708, "din_yuzde": 74.11764705882354}, {"name": "Muhammed Yekta  ÖZDEMİR", "class": "8A", "turkce_full": [20.0, 20.0, 20.0, 20.0, 20.0, 18.67, 18.67, 20.0, 18.67, 20.0, 18.67, null, 17.33, 20.0, 20.0, 17.33, 18.67, 18.67, null, 20.0, 20.0], "matematik_full": [20.0, 20.0, 18.67, 18.67, 18.67, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, null, 20.0, 18.67, 17.33, 18.67, 18.67, 20.0, null, 18.67, 16.0], "fen_full": [17.33, 20.0, 16.0, 17.33, 18.67, 18.67, 18.67, 17.33, 17.33, 20.0, 18.67, null, 18.67, 17.33, 20.0, 16.0, 18.67, 20.0, null, 20.0, 20.0], "sosyal_full": [10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, null, 10.0, 10.0, 10.0, 8.67, 10.0, 10.0, null, 10.0, 10.0], "ingilizce_full": [10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, null, 10.0, 8.67, 10.0, 10.0, 10.0, 10.0, null, 10.0, 10.0], "din_full": [10.0, 10.0, 8.67, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, null, 10.0, 10.0, 7.33, 10.0, 10.0, 8.67, null, 8.67, 10.0], "turkce": [20.0, 20.0, 20.0, 20.0, 20.0, 18.67, 18.67, 20.0, 18.67, 20.0, 18.67, 17.33, 20.0, 20.0, 17.33, 18.67, 18.67, 20.0, 20.0], "matematik": [20.0, 20.0, 18.67, 18.67, 18.67, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 18.67, 17.33, 18.67, 18.67, 20.0, 18.67, 16.0], "fen": [17.33, 20.0, 16.0, 17.33, 18.67, 18.67, 18.67, 17.33, 17.33, 20.0, 18.67, 18.67, 17.33, 20.0, 16.0, 18.67, 20.0, 20.0, 20.0], "sosyal": [10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 8.67, 10.0, 10.0, 10.0, 10.0], "ingilizce": [10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 8.67, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0], "din": [10.0, 10.0, 8.67, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 7.33, 10.0, 10.0, 8.67, 8.67, 10.0], "turkce_ort": 19.298947368421054, "matematik_ort": 19.158947368421053, "fen_ort": 18.45631578947368, "sosyal_ort": 9.930000000000001, "ingilizce_ort": 9.930000000000001, "din_ort": 9.649473684210525, "turkce_yuzde": 96.49473684210527, "matematik_yuzde": 95.79473684210527, "fen_yuzde": 92.2815789473684, "sosyal_yuzde": 99.30000000000001, "ingilizce_yuzde": 99.30000000000001, "din_yuzde": 96.49473684210525}, {"name": "Nida  ÇAKMAK", "class": "8A", "turkce_full": [20.0, 16.0, 16.0, 18.67, 14.67, 10.67, 17.33, 17.33, 18.67, 13.33, 13.33, null, 17.33, null, null, 16.0, 9.33, 13.67, 18.67, 18.67, 17.33], "matematik_full": [12.33, 13.33, 8.0, 7.0, 9.33, 8.33, 8.33, 10.67, 10.67, 13.33, 13.67, null, 12.0, null, null, 7.0, 8.67, 14.0, 7.0, 4.0, 7.33], "fen_full": [14.67, 12.0, 13.33, 13.33, 14.67, 17.33, 17.33, 13.33, 12.0, 16.0, 18.67, null, 13.67, null, null, 12.0, 17.33, 16.0, 9.33, 20.0, 18.67], "sosyal_full": [6.0, 6.0, 8.67, 10.0, 5.33, 8.67, 6.0, 8.67, 4.67, 3.33, 3.33, null, 6.0, null, null, 6.0, 4.67, 6.0, 4.67, 6.0, 10.0], "ingilizce_full": [7.33, 8.67, 8.67, 8.67, 10.0, 8.67, 8.67, 8.67, 7.33, 10.0, 7.33, null, 8.67, null, null, 10.0, 7.33, 10.0, 10.0, 10.0, 10.0], "din_full": [0.67, 7.33, 8.67, 10.0, 7.33, 7.33, 7.33, 10.0, 4.67, 7.33, 6.0, null, 8.67, null, null, 7.33, 8.67, 6.0, 8.67, 8.67, 10.0], "turkce": [20.0, 16.0, 16.0, 18.67, 14.67, 10.67, 17.33, 17.33, 18.67, 13.33, 13.33, 17.33, 16.0, 9.33, 13.67, 18.67, 18.67, 17.33], "matematik": [12.33, 13.33, 8.0, 7.0, 9.33, 8.33, 8.33, 10.67, 10.67, 13.33, 13.67, 12.0, 7.0, 8.67, 14.0, 7.0, 4.0, 7.33], "fen": [14.67, 12.0, 13.33, 13.33, 14.67, 17.33, 17.33, 13.33, 12.0, 16.0, 18.67, 13.67, 12.0, 17.33, 16.0, 9.33, 20.0, 18.67], "sosyal": [6.0, 6.0, 8.67, 10.0, 5.33, 8.67, 6.0, 8.67, 4.67, 3.33, 3.33, 6.0, 6.0, 4.67, 6.0, 4.67, 6.0, 10.0], "ingilizce": [7.33, 8.67, 8.67, 8.67, 10.0, 8.67, 8.67, 8.67, 7.33, 10.0, 7.33, 8.67, 10.0, 7.33, 10.0, 10.0, 10.0, 10.0], "din": [0.67, 7.33, 8.67, 10.0, 7.33, 7.33, 7.33, 10.0, 4.67, 7.33, 6.0, 8.67, 7.33, 8.67, 6.0, 8.67, 8.67, 10.0], "turkce_ort": 15.944444444444445, "matematik_ort": 9.721666666666668, "fen_ort": 14.981111111111112, "sosyal_ort": 6.33388888888889, "ingilizce_ort": 8.889444444444443, "din_ort": 7.481666666666667, "turkce_yuzde": 79.72222222222223, "matematik_yuzde": 48.608333333333334, "fen_yuzde": 74.90555555555557, "sosyal_yuzde": 63.3388888888889, "ingilizce_yuzde": 88.89444444444443, "din_yuzde": 74.81666666666668}, {"name": "Yağız Alp TAŞ", "class": "8A", "turkce_full": [18.67, 17.33, 17.33, 20.0, 17.33, 18.67, 17.33, 20.0, 17.33, 18.67, 18.67, null, 17.33, 20.0, 18.67, 14.67, 14.67, 18.67, 16.0, 17.33, 18.67], "matematik_full": [17.33, 20.0, 18.67, 18.67, 18.67, 17.33, 18.67, 20.0, 18.67, 17.33, 17.33, null, 18.67, 18.67, 16.0, 16.0, 18.67, 20.0, 18.67, 17.33, 14.67], "fen_full": [18.67, 20.0, 14.67, 20.0, 17.33, 20.0, 20.0, 17.33, 17.33, 18.67, 17.33, null, 17.33, 20.0, 20.0, 20.0, 17.33, 18.67, 17.33, 20.0, 20.0], "sosyal_full": [10.0, 8.67, 8.67, 10.0, 10.0, 8.67, 10.0, 10.0, 7.33, 10.0, 7.33, null, 10.0, 7.33, 8.67, 10.0, 10.0, 7.33, 10.0, 8.67, 10.0], "ingilizce_full": [8.67, 10.0, 8.67, 10.0, 10.0, 8.67, 10.0, 8.67, 8.67, 7.33, 10.0, null, 10.0, 10.0, 10.0, 10.0, 8.67, 10.0, 10.0, 10.0, 10.0], "din_full": [10.0, 8.67, 8.67, 10.0, 10.0, 8.67, 8.67, 10.0, 7.33, 10.0, 10.0, null, 10.0, 7.33, 8.67, 10.0, 10.0, 10.0, 10.0, 7.33, 10.0], "turkce": [18.67, 17.33, 17.33, 20.0, 17.33, 18.67, 17.33, 20.0, 17.33, 18.67, 18.67, 17.33, 20.0, 18.67, 14.67, 14.67, 18.67, 16.0, 17.33, 18.67], "matematik": [17.33, 20.0, 18.67, 18.67, 18.67, 17.33, 18.67, 20.0, 18.67, 17.33, 17.33, 18.67, 18.67, 16.0, 16.0, 18.67, 20.0, 18.67, 17.33, 14.67], "fen": [18.67, 20.0, 14.67, 20.0, 17.33, 20.0, 20.0, 17.33, 17.33, 18.67, 17.33, 17.33, 20.0, 20.0, 20.0, 17.33, 18.67, 17.33, 20.0, 20.0], "sosyal": [10.0, 8.67, 8.67, 10.0, 10.0, 8.67, 10.0, 10.0, 7.33, 10.0, 7.33, 10.0, 7.33, 8.67, 10.0, 10.0, 7.33, 10.0, 8.67, 10.0], "ingilizce": [8.67, 10.0, 8.67, 10.0, 10.0, 8.67, 10.0, 8.67, 8.67, 7.33, 10.0, 10.0, 10.0, 10.0, 10.0, 8.67, 10.0, 10.0, 10.0, 10.0], "din": [10.0, 8.67, 8.67, 10.0, 10.0, 8.67, 8.67, 10.0, 7.33, 10.0, 10.0, 10.0, 7.33, 8.67, 10.0, 10.0, 10.0, 10.0, 7.33, 10.0], "turkce_ort": 17.866999999999997, "matematik_ort": 18.067500000000003, "fen_ort": 18.5995, "sosyal_ort": 9.133500000000002, "ingilizce_ort": 9.467500000000001, "din_ort": 9.267, "turkce_yuzde": 89.33499999999998, "matematik_yuzde": 90.33750000000002, "fen_yuzde": 92.9975, "sosyal_yuzde": 91.33500000000001, "ingilizce_yuzde": 94.67500000000001, "din_yuzde": 92.67}, {"name": "Yunus ALTUNKAYA", "class": "8A", "turkce_full": [18.67, 18.67, 20.0, 12.0, 18.67, null, 18.67, null, null, 16.0, 16.0, null, 16.0, null, null, 14.67, 8.0, 14.67, null, 18.67, null], "matematik_full": [12.0, 18.67, 14.67, 16.0, 17.33, null, 20.0, null, null, 17.67, 16.33, null, 16.0, null, null, 15.0, 16.0, 14.67, null, 15.0, null], "fen_full": [13.67, 14.67, 9.33, 10.67, 12.0, null, 18.67, null, null, 18.67, 17.33, null, 12.0, null, null, 16.0, 14.67, 16.0, null, 20.0, null], "sosyal_full": [8.67, 7.33, 4.67, 6.0, 8.67, null, 10.0, null, null, 8.67, 6.0, null, 6.0, null, null, 6.0, 7.33, 7.33, null, 10.0, null], "ingilizce_full": [3.33, 6.0, 7.33, 6.0, 10.0, null, 7.67, null, null, 7.67, 8.67, null, 6.0, null, null, 8.67, 10.0, 7.33, null, 10.0, null], "din_full": [7.33, 8.67, 7.33, 8.67, 8.67, null, 10.0, null, null, 6.33, 7.33, null, 8.67, null, null, 10.0, 8.67, 7.33, null, 7.33, null], "turkce": [18.67, 18.67, 20.0, 12.0, 18.67, 18.67, 16.0, 16.0, 16.0, 14.67, 8.0, 14.67, 18.67], "matematik": [12.0, 18.67, 14.67, 16.0, 17.33, 20.0, 17.67, 16.33, 16.0, 15.0, 16.0, 14.67, 15.0], "fen": [13.67, 14.67, 9.33, 10.67, 12.0, 18.67, 18.67, 17.33, 12.0, 16.0, 14.67, 16.0, 20.0], "sosyal": [8.67, 7.33, 4.67, 6.0, 8.67, 10.0, 8.67, 6.0, 6.0, 6.0, 7.33, 7.33, 10.0], "ingilizce": [3.33, 6.0, 7.33, 6.0, 10.0, 7.67, 7.67, 8.67, 6.0, 8.67, 10.0, 7.33, 10.0], "din": [7.33, 8.67, 7.33, 8.67, 8.67, 10.0, 6.33, 7.33, 8.67, 10.0, 8.67, 7.33, 7.33], "turkce_ort": 16.206923076923076, "matematik_ort": 16.103076923076923, "fen_ort": 14.898461538461536, "sosyal_ort": 7.436153846153847, "ingilizce_ort": 7.59, "din_ort": 8.179230769230768, "turkce_yuzde": 81.03461538461538, "matematik_yuzde": 80.5153846153846, "fen_yuzde": 74.49230769230768, "sosyal_yuzde": 74.36153846153847, "ingilizce_yuzde": 75.9, "din_yuzde": 81.79230769230769}, {"name": "Zehra  HARPUTLUOĞLU", "class": "8A", "turkce_full": [17.33, 17.33, 18.67, 16.0, 18.67, 17.33, 16.0, 16.0, 14.67, 18.67, 16.0, null, 18.67, 17.33, 14.67, null, 9.33, 14.67, 13.33, 17.33, 14.67], "matematik_full": [16.0, 18.67, 16.0, 17.33, 18.67, 16.0, 10.67, 17.33, 17.33, 18.67, 17.33, null, 17.33, 18.67, 14.67, null, 18.67, 19.0, 13.33, 17.33, 13.33], "fen_full": [16.0, 17.33, 16.0, 20.0, 14.67, 16.0, 17.33, 16.0, 12.0, 18.67, 14.67, null, 20.0, 16.0, 14.67, null, 17.33, 14.67, 14.67, 20.0, 16.0], "sosyal_full": [10.0, 8.67, 3.33, 8.67, 8.67, 10.0, 6.0, 10.0, 8.67, 7.33, 8.67, null, 8.67, 7.33, 7.33, null, 8.67, 8.67, 8.67, 8.67, 6.0], "ingilizce_full": [7.33, 10.0, 8.67, 10.0, 10.0, 8.67, 8.67, 10.0, 8.67, 10.0, 10.0, null, 10.0, 4.67, 10.0, null, 10.0, 10.0, 10.0, 8.67, 8.67], "din_full": [8.67, 7.33, 8.67, 10.0, 3.33, 8.67, 4.67, 10.0, 3.33, 6.0, 8.67, null, 10.0, 6.0, 7.33, null, 5.67, 6.0, 8.67, 7.33, 7.33], "turkce": [17.33, 17.33, 18.67, 16.0, 18.67, 17.33, 16.0, 16.0, 14.67, 18.67, 16.0, 18.67, 17.33, 14.67, 9.33, 14.67, 13.33, 17.33, 14.67], "matematik": [16.0, 18.67, 16.0, 17.33, 18.67, 16.0, 10.67, 17.33, 17.33, 18.67, 17.33, 17.33, 18.67, 14.67, 18.67, 19.0, 13.33, 17.33, 13.33], "fen": [16.0, 17.33, 16.0, 20.0, 14.67, 16.0, 17.33, 16.0, 12.0, 18.67, 14.67, 20.0, 16.0, 14.67, 17.33, 14.67, 14.67, 20.0, 16.0], "sosyal": [10.0, 8.67, 3.33, 8.67, 8.67, 10.0, 6.0, 10.0, 8.67, 7.33, 8.67, 8.67, 7.33, 7.33, 8.67, 8.67, 8.67, 8.67, 6.0], "ingilizce": [7.33, 10.0, 8.67, 10.0, 10.0, 8.67, 8.67, 10.0, 8.67, 10.0, 10.0, 10.0, 4.67, 10.0, 10.0, 10.0, 10.0, 8.67, 8.67], "din": [8.67, 7.33, 8.67, 10.0, 3.33, 8.67, 4.67, 10.0, 3.33, 6.0, 8.67, 10.0, 6.0, 7.33, 5.67, 6.0, 8.67, 7.33, 7.33], "turkce_ort": 16.140526315789476, "matematik_ort": 16.64894736842105, "fen_ort": 16.421578947368424, "sosyal_ort": 8.106315789473683, "ingilizce_ort": 9.158947368421051, "din_ort": 7.245789473684211, "turkce_yuzde": 80.70263157894738, "matematik_yuzde": 83.24473684210525, "fen_yuzde": 82.10789473684213, "sosyal_yuzde": 81.06315789473683, "ingilizce_yuzde": 91.5894736842105, "din_yuzde": 72.4578947368421}, {"name": "Zeren Başak  BAYRAM", "class": "8A", "turkce_full": [20.0, 18.67, 17.33, 18.67, 18.67, 17.33, 20.0, 17.33, 17.33, 20.0, 17.33, null, 18.67, null, 20.0, 14.67, 16.0, 16.0, 17.33, 18.67, 17.33], "matematik_full": [20.0, 20.0, 20.0, 18.67, 17.33, 18.67, 17.33, 18.67, 18.67, 18.67, 18.67, null, 20.0, null, 17.33, 16.0, 16.0, 18.67, 20.0, 16.0, 20.0], "fen_full": [20.0, 20.0, 16.0, 17.33, 16.0, 18.67, 17.33, 18.67, 17.33, 18.67, 20.0, null, 18.67, null, 20.0, 17.33, 17.33, 17.33, 17.33, 20.0, 16.0], "sosyal_full": [10.0, 10.0, 7.33, 8.67, 10.0, 10.0, 10.0, 10.0, 7.33, 7.33, 6.0, null, 8.67, null, 8.67, 10.0, 8.67, 4.67, 10.0, 10.0, 8.67], "ingilizce_full": [10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 8.67, 8.67, 8.67, 10.0, null, 10.0, null, 8.67, 10.0, 8.67, 10.0, 10.0, 10.0, 10.0], "din_full": [10.0, 10.0, 8.67, 10.0, 7.33, 8.67, 7.33, 10.0, 8.67, 8.67, 7.33, null, 10.0, null, 10.0, 10.0, 10.0, 7.33, 10.0, 10.0, 10.0], "turkce": [20.0, 18.67, 17.33, 18.67, 18.67, 17.33, 20.0, 17.33, 17.33, 20.0, 17.33, 18.67, 20.0, 14.67, 16.0, 16.0, 17.33, 18.67, 17.33], "matematik": [20.0, 20.0, 20.0, 18.67, 17.33, 18.67, 17.33, 18.67, 18.67, 18.67, 18.67, 20.0, 17.33, 16.0, 16.0, 18.67, 20.0, 16.0, 20.0], "fen": [20.0, 20.0, 16.0, 17.33, 16.0, 18.67, 17.33, 18.67, 17.33, 18.67, 20.0, 18.67, 20.0, 17.33, 17.33, 17.33, 17.33, 20.0, 16.0], "sosyal": [10.0, 10.0, 7.33, 8.67, 10.0, 10.0, 10.0, 10.0, 7.33, 7.33, 6.0, 8.67, 8.67, 10.0, 8.67, 4.67, 10.0, 10.0, 8.67], "ingilizce": [10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 8.67, 8.67, 8.67, 10.0, 10.0, 8.67, 10.0, 8.67, 10.0, 10.0, 10.0, 10.0], "din": [10.0, 10.0, 8.67, 10.0, 7.33, 8.67, 7.33, 10.0, 8.67, 8.67, 7.33, 10.0, 10.0, 10.0, 10.0, 7.33, 10.0, 10.0, 10.0], "turkce_ort": 17.964736842105264, "matematik_ort": 18.45684210526316, "fen_ort": 18.10473684210526, "sosyal_ort": 8.737368421052631, "ingilizce_ort": 9.65, "din_ort": 9.157894736842104, "turkce_yuzde": 89.82368421052632, "matematik_yuzde": 92.2842105263158, "fen_yuzde": 90.5236842105263, "sosyal_yuzde": 87.37368421052632, "ingilizce_yuzde": 96.50000000000001, "din_yuzde": 91.57894736842105}, {"name": "Aras SEZGİN", "class": "8B", "turkce_full": [13.67, 15.0, 16.0, 16.33, 14.67, null, 12.67, 16.0, 7.67, 11.0, null, null, 16.0, 12.33, 13.67, 11.0, 10.33, 9.33, 15.33, 13.67, 16.0], "matematik_full": [4.0, 11.33, 5.33, 5.33, 7.0, null, 4.67, 4.0, 9.0, 6.67, null, null, 6.67, 5.0, 1.67, 9.33, 5.0, 6.0, 3.67, 4.0, 4.0], "fen_full": [13.33, 16.0, 7.67, 5.33, 10.67, null, 13.33, 7.0, 4.67, 9.67, null, null, 12.33, 9.33, 7.67, 8.0, 9.0, 9.67, 9.0, 15.0, 10.67], "sosyal_full": [6.0, 4.67, 3.67, 7.33, 7.33, null, 6.33, 8.67, 9.0, 6.0, null, null, 6.0, 7.33, 6.33, 8.67, 5.33, 7.33, 7.33, 8.67, 6.33], "ingilizce_full": [3.33, 8.67, 8.67, 8.67, 10.0, null, 5.0, 8.67, 10.0, 6.33, null, null, 7.33, 9.0, 7.33, 10.0, 10.0, 7.67, 9.0, 10.0, 10.0], "din_full": [7.33, 8.67, 7.33, 10.0, 7.33, null, 8.67, 10.0, 6.33, 6.0, null, null, 7.33, 7.33, 8.67, 7.33, 6.33, 6.33, 8.67, 4.67, 10.0], "turkce": [13.67, 15.0, 16.0, 16.33, 14.67, 12.67, 16.0, 7.67, 11.0, 16.0, 12.33, 13.67, 11.0, 10.33, 9.33, 15.33, 13.67, 16.0], "matematik": [4.0, 11.33, 5.33, 5.33, 7.0, 4.67, 4.0, 9.0, 6.67, 6.67, 5.0, 1.67, 9.33, 5.0, 6.0, 3.67, 4.0, 4.0], "fen": [13.33, 16.0, 7.67, 5.33, 10.67, 13.33, 7.0, 4.67, 9.67, 12.33, 9.33, 7.67, 8.0, 9.0, 9.67, 9.0, 15.0, 10.67], "sosyal": [6.0, 4.67, 3.67, 7.33, 7.33, 6.33, 8.67, 9.0, 6.0, 6.0, 7.33, 6.33, 8.67, 5.33, 7.33, 7.33, 8.67, 6.33], "ingilizce": [3.33, 8.67, 8.67, 8.67, 10.0, 5.0, 8.67, 10.0, 6.33, 7.33, 9.0, 7.33, 10.0, 10.0, 7.67, 9.0, 10.0, 10.0], "din": [7.33, 8.67, 7.33, 10.0, 7.33, 8.67, 10.0, 6.33, 6.0, 7.33, 7.33, 8.67, 7.33, 6.33, 6.33, 8.67, 4.67, 10.0], "turkce_ort": 13.370555555555555, "matematik_ort": 5.703888888888889, "fen_ort": 9.907777777777778, "sosyal_ort": 6.795555555555556, "ingilizce_ort": 8.315000000000001, "din_ort": 7.684444444444444, "turkce_yuzde": 66.85277777777777, "matematik_yuzde": 28.519444444444442, "fen_yuzde": 49.53888888888889, "sosyal_yuzde": 67.95555555555556, "ingilizce_yuzde": 83.15, "din_yuzde": 76.84444444444443}, {"name": "Aslı KOYUNCU", "class": "8B", "turkce_full": [18.67, 13.33, 15.33, 16.67, 13.33, 16.33, 16.67, 9.67, 13.67, null, null, null, 16.33, 13.67, null, 7.67, 9.0, 13.33, 17.33, 18.67, 16.0], "matematik_full": [6.0, 12.33, 8.33, 9.67, 1.67, 5.67, 5.67, 7.0, 5.67, null, null, null, 8.67, 5.33, null, 2.33, 7.67, 6.67, 12.0, 2.0, 2.0], "fen_full": [9.33, 13.33, 13.33, 13.67, 8.67, 9.33, 12.33, 10.67, 11.33, null, null, null, 10.0, 14.67, null, 14.67, 14.0, 13.67, 13.33, 17.33, 11.33], "sosyal_full": [8.67, 8.67, 6.0, 7.33, 7.33, 9.0, 8.67, 10.0, 4.67, null, null, null, 7.33, 7.67, null, 4.67, 7.33, 7.67, 7.67, 8.67, 8.67], "ingilizce_full": [6.0, 10.0, 10.0, 10.0, 10.0, 10.0, 8.67, 8.67, 10.0, null, null, null, 8.67, 7.33, null, 8.67, 10.0, 8.67, 10.0, 10.0, 7.33], "din_full": [2.0, 10.0, 10.0, 7.67, 8.67, 8.67, 8.67, 10.0, 5.0, null, null, null, 4.67, 6.33, null, 4.67, 8.67, 6.33, 7.33, 3.67, 6.0], "turkce": [18.67, 13.33, 15.33, 16.67, 13.33, 16.33, 16.67, 9.67, 13.67, 16.33, 13.67, 7.67, 9.0, 13.33, 17.33, 18.67, 16.0], "matematik": [6.0, 12.33, 8.33, 9.67, 1.67, 5.67, 5.67, 7.0, 5.67, 8.67, 5.33, 2.33, 7.67, 6.67, 12.0, 2.0, 2.0], "fen": [9.33, 13.33, 13.33, 13.67, 8.67, 9.33, 12.33, 10.67, 11.33, 10.0, 14.67, 14.67, 14.0, 13.67, 13.33, 17.33, 11.33], "sosyal": [8.67, 8.67, 6.0, 7.33, 7.33, 9.0, 8.67, 10.0, 4.67, 7.33, 7.67, 4.67, 7.33, 7.67, 7.67, 8.67, 8.67], "ingilizce": [6.0, 10.0, 10.0, 10.0, 10.0, 10.0, 8.67, 8.67, 10.0, 8.67, 7.33, 8.67, 10.0, 8.67, 10.0, 10.0, 7.33], "din": [2.0, 10.0, 10.0, 7.67, 8.67, 8.67, 8.67, 10.0, 5.0, 4.67, 6.33, 4.67, 8.67, 6.33, 7.33, 3.67, 6.0], "turkce_ort": 14.451176470588237, "matematik_ort": 6.392941176470589, "fen_ort": 12.411176470588236, "sosyal_ort": 7.648235294117647, "ingilizce_ort": 9.059411764705883, "din_ort": 6.961764705882353, "turkce_yuzde": 72.25588235294119, "matematik_yuzde": 31.964705882352945, "fen_yuzde": 62.05588235294118, "sosyal_yuzde": 76.48235294117647, "ingilizce_yuzde": 90.59411764705884, "din_yuzde": 69.61764705882352}, {"name": "Ayşe Selin GENÇ", "class": "8B", "turkce_full": [18.67, 18.67, 20.0, 17.33, 20.0, 20.0, 20.0, 18.67, 14.67, 20.0, 20.0, null, 17.33, 17.33, 18.67, 14.67, 17.33, 18.67, 18.67, 17.33, 18.67], "matematik_full": [20.0, 18.67, 20.0, 17.33, 17.33, 17.33, 20.0, 18.67, 17.67, 18.67, 20.0, null, 18.67, 20.0, 17.33, 17.33, 20.0, 20.0, 17.33, 13.67, 15.33], "fen_full": [20.0, 20.0, 16.0, 14.67, 17.33, 17.33, 18.67, 18.67, 17.33, 18.67, 20.0, null, 17.33, 17.33, 20.0, 16.0, 17.33, 20.0, 16.0, 20.0, 18.67], "sosyal_full": [10.0, 10.0, 7.33, 10.0, 8.67, 10.0, 8.67, 10.0, 7.33, 8.67, 10.0, null, 10.0, 8.67, 10.0, 8.67, 10.0, 7.33, 10.0, 10.0, 10.0], "ingilizce_full": [10.0, 8.67, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, null, 10.0, 10.0, 8.67, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0], "din_full": [10.0, 10.0, 10.0, 10.0, 10.0, 8.67, 8.67, 10.0, 7.33, 8.67, 10.0, null, 10.0, 8.67, 10.0, 8.67, 8.67, 10.0, 10.0, 10.0, 10.0], "turkce": [18.67, 18.67, 20.0, 17.33, 20.0, 20.0, 20.0, 18.67, 14.67, 20.0, 20.0, 17.33, 17.33, 18.67, 14.67, 17.33, 18.67, 18.67, 17.33, 18.67], "matematik": [20.0, 18.67, 20.0, 17.33, 17.33, 17.33, 20.0, 18.67, 17.67, 18.67, 20.0, 18.67, 20.0, 17.33, 17.33, 20.0, 20.0, 17.33, 13.67, 15.33], "fen": [20.0, 20.0, 16.0, 14.67, 17.33, 17.33, 18.67, 18.67, 17.33, 18.67, 20.0, 17.33, 17.33, 20.0, 16.0, 17.33, 20.0, 16.0, 20.0, 18.67], "sosyal": [10.0, 10.0, 7.33, 10.0, 8.67, 10.0, 8.67, 10.0, 7.33, 8.67, 10.0, 10.0, 8.67, 10.0, 8.67, 10.0, 7.33, 10.0, 10.0, 10.0], "ingilizce": [10.0, 8.67, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 8.67, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0], "din": [10.0, 10.0, 10.0, 10.0, 10.0, 8.67, 8.67, 10.0, 7.33, 8.67, 10.0, 10.0, 8.67, 10.0, 8.67, 8.67, 10.0, 10.0, 10.0, 10.0], "turkce_ort": 18.334000000000003, "matematik_ort": 18.2665, "fen_ort": 18.066499999999998, "sosyal_ort": 9.267, "ingilizce_ort": 9.867, "din_ort": 9.467500000000001, "turkce_yuzde": 91.67000000000002, "matematik_yuzde": 91.33250000000001, "fen_yuzde": 90.3325, "sosyal_yuzde": 92.67, "ingilizce_yuzde": 98.67000000000002, "din_yuzde": 94.67500000000001}, {"name": "Azra  YILDIZ", "class": "8B", "turkce_full": [17.33, 13.33, 18.67, 17.33, 17.33, 16.0, 13.33, null, 14.67, 17.33, null, null, null, null, 17.33, 13.33, 12.0, 14.67, 17.67, 20.0, 17.33], "matematik_full": [16.0, 20.0, 17.33, 18.67, 17.33, 20.0, 17.33, null, 18.67, 19.0, null, null, null, null, 13.33, 12.33, 17.33, 17.33, 17.33, 17.33, 12.33], "fen_full": [17.33, 18.67, 11.0, 18.67, 17.33, 16.0, 17.33, null, 16.0, 18.67, null, null, null, null, 14.67, 14.67, 17.33, 14.67, 16.0, 20.0, 15.0], "sosyal_full": [8.67, 8.67, 6.0, 10.0, 8.67, 8.67, 10.0, null, 8.67, 7.33, null, null, null, null, 6.0, 8.67, 8.67, 10.0, 10.0, 10.0, 8.67], "ingilizce_full": [8.67, 7.33, 6.0, 10.0, 10.0, 8.67, 10.0, null, 10.0, 10.0, null, null, null, null, 6.0, 10.0, 7.33, 8.67, 7.33, 10.0, 10.0], "din_full": [10.0, 8.67, 8.67, 8.67, 10.0, 8.67, 7.33, null, 8.67, 8.67, null, null, null, null, 8.67, 7.33, 10.0, 8.67, 7.33, 7.33, 7.33], "turkce": [17.33, 13.33, 18.67, 17.33, 17.33, 16.0, 13.33, 14.67, 17.33, 17.33, 13.33, 12.0, 14.67, 17.67, 20.0, 17.33], "matematik": [16.0, 20.0, 17.33, 18.67, 17.33, 20.0, 17.33, 18.67, 19.0, 13.33, 12.33, 17.33, 17.33, 17.33, 17.33, 12.33], "fen": [17.33, 18.67, 11.0, 18.67, 17.33, 16.0, 17.33, 16.0, 18.67, 14.67, 14.67, 17.33, 14.67, 16.0, 20.0, 15.0], "sosyal": [8.67, 8.67, 6.0, 10.0, 8.67, 8.67, 10.0, 8.67, 7.33, 6.0, 8.67, 8.67, 10.0, 10.0, 10.0, 8.67], "ingilizce": [8.67, 7.33, 6.0, 10.0, 10.0, 8.67, 10.0, 10.0, 10.0, 6.0, 10.0, 7.33, 8.67, 7.33, 10.0, 10.0], "din": [10.0, 8.67, 8.67, 8.67, 10.0, 8.67, 7.33, 8.67, 8.67, 8.67, 7.33, 10.0, 8.67, 7.33, 7.33, 7.33], "turkce_ort": 16.103125, "matematik_ort": 16.9775, "fen_ort": 16.45875, "sosyal_ort": 8.668125, "ingilizce_ort": 8.75, "din_ort": 8.500625, "turkce_yuzde": 80.51562499999999, "matematik_yuzde": 84.88749999999999, "fen_yuzde": 82.29374999999999, "sosyal_yuzde": 86.68125, "ingilizce_yuzde": 87.5, "din_yuzde": 85.00625}, {"name": "Bahar TÜTÜNCÜLER", "class": "8B", "turkce_full": [null, 18.67, 17.33, 14.67, 16.0, 13.67, 17.33, 19.0, 15.0, 14.67, null, null, 16.0, null, 13.33, 14.67, 9.67, 12.0, 18.67, 18.67, 17.67], "matematik_full": [null, 17.33, 14.67, 15.0, 11.0, 6.67, 1.33, 7.67, 14.0, 16.33, null, null, 15.0, null, 10.67, 6.67, 14.67, 10.67, 7.0, 9.67, 6.67], "fen_full": [null, 13.33, 13.33, 10.67, 9.33, 13.33, 17.33, 16.0, 13.33, 14.67, null, null, 13.33, null, 15.0, 13.33, 13.33, 17.33, 16.0, 17.33, 16.0], "sosyal_full": [null, 10.0, 7.33, 6.0, 6.0, 8.67, 6.0, 10.0, 6.0, 6.0, null, null, 10.0, null, 8.67, 8.67, 7.33, 8.67, 6.0, 8.67, 10.0], "ingilizce_full": [null, 10.0, 7.33, 7.33, 10.0, 7.33, 10.0, 9.0, 10.0, 8.67, null, null, 10.0, null, 7.33, 10.0, 10.0, 8.67, 8.67, 10.0, 8.67], "din_full": [null, 3.33, 10.0, 10.0, 7.33, 6.0, 7.33, 10.0, 8.67, 7.33, null, null, 7.33, null, 8.67, 7.33, 8.67, 3.33, 7.33, 8.67, 10.0], "turkce": [18.67, 17.33, 14.67, 16.0, 13.67, 17.33, 19.0, 15.0, 14.67, 16.0, 13.33, 14.67, 9.67, 12.0, 18.67, 18.67, 17.67], "matematik": [17.33, 14.67, 15.0, 11.0, 6.67, 1.33, 7.67, 14.0, 16.33, 15.0, 10.67, 6.67, 14.67, 10.67, 7.0, 9.67, 6.67], "fen": [13.33, 13.33, 10.67, 9.33, 13.33, 17.33, 16.0, 13.33, 14.67, 13.33, 15.0, 13.33, 13.33, 17.33, 16.0, 17.33, 16.0], "sosyal": [10.0, 7.33, 6.0, 6.0, 8.67, 6.0, 10.0, 6.0, 6.0, 10.0, 8.67, 8.67, 7.33, 8.67, 6.0, 8.67, 10.0], "ingilizce": [10.0, 7.33, 7.33, 10.0, 7.33, 10.0, 9.0, 10.0, 8.67, 10.0, 7.33, 10.0, 10.0, 8.67, 8.67, 10.0, 8.67], "din": [3.33, 10.0, 10.0, 7.33, 6.0, 7.33, 10.0, 8.67, 7.33, 7.33, 8.67, 7.33, 8.67, 3.33, 7.33, 8.67, 10.0], "turkce_ort": 15.707058823529414, "matematik_ort": 10.883529411764707, "fen_ort": 14.29235294117647, "sosyal_ort": 7.882941176470588, "ingilizce_ort": 8.999999999999998, "din_ort": 7.724705882352941, "turkce_yuzde": 78.53529411764707, "matematik_yuzde": 54.41764705882354, "fen_yuzde": 71.46176470588235, "sosyal_yuzde": 78.82941176470588, "ingilizce_yuzde": 89.99999999999999, "din_yuzde": 77.24705882352941}, {"name": "Bartu KAVAK", "class": "8B", "turkce_full": [14.67, 17.33, 17.33, 16.0, 17.33, 9.67, 18.67, 18.67, 14.67, 17.33, 10.67, null, 18.67, 12.0, 12.0, 12.0, 12.0, 13.33, 17.33, 20.0, 13.33], "matematik_full": [12.0, 14.67, 11.0, 11.33, 17.33, 11.0, 13.33, 11.0, 10.0, 15.33, 11.0, null, 15.0, 14.67, 5.67, 7.67, 8.67, 15.33, 6.33, 10.67, 3.67], "fen_full": [9.33, 14.67, 13.33, 10.67, 9.33, 13.33, 14.67, 16.0, 14.67, 14.67, 14.67, null, 13.67, 14.67, 16.0, 6.67, 13.33, 16.0, 13.33, 17.33, 13.33], "sosyal_full": [7.33, 7.33, 8.67, 8.67, 8.67, 8.67, 8.67, 8.67, 4.67, 7.33, 7.33, null, 10.0, 7.33, 7.33, 8.67, 8.67, 7.33, 8.67, 8.67, 8.67], "ingilizce_full": [10.0, 6.0, 10.0, 10.0, 10.0, 9.0, 8.67, 8.67, 10.0, 7.33, 8.67, null, 6.0, 10.0, 6.0, 10.0, 8.67, 10.0, 8.67, 10.0, 7.33], "din_full": [2.0, 4.67, 8.67, 8.67, 8.67, 8.67, 8.67, 8.67, 6.0, 8.67, 8.67, null, 8.67, 7.33, 8.67, 8.67, 8.67, 4.67, 6.0, 4.67, 6.0], "turkce": [14.67, 17.33, 17.33, 16.0, 17.33, 9.67, 18.67, 18.67, 14.67, 17.33, 10.67, 18.67, 12.0, 12.0, 12.0, 12.0, 13.33, 17.33, 20.0, 13.33], "matematik": [12.0, 14.67, 11.0, 11.33, 17.33, 11.0, 13.33, 11.0, 10.0, 15.33, 11.0, 15.0, 14.67, 5.67, 7.67, 8.67, 15.33, 6.33, 10.67, 3.67], "fen": [9.33, 14.67, 13.33, 10.67, 9.33, 13.33, 14.67, 16.0, 14.67, 14.67, 14.67, 13.67, 14.67, 16.0, 6.67, 13.33, 16.0, 13.33, 17.33, 13.33], "sosyal": [7.33, 7.33, 8.67, 8.67, 8.67, 8.67, 8.67, 8.67, 4.67, 7.33, 7.33, 10.0, 7.33, 7.33, 8.67, 8.67, 7.33, 8.67, 8.67, 8.67], "ingilizce": [10.0, 6.0, 10.0, 10.0, 10.0, 9.0, 8.67, 8.67, 10.0, 7.33, 8.67, 6.0, 10.0, 6.0, 10.0, 8.67, 10.0, 8.67, 10.0, 7.33], "din": [2.0, 4.67, 8.67, 8.67, 8.67, 8.67, 8.67, 8.67, 6.0, 8.67, 8.67, 8.67, 7.33, 8.67, 8.67, 8.67, 4.67, 6.0, 4.67, 6.0], "turkce_ort": 15.15, "matematik_ort": 11.2835, "fen_ort": 13.483500000000001, "sosyal_ort": 8.067499999999999, "ingilizce_ort": 8.750499999999999, "din_ort": 7.269, "turkce_yuzde": 75.75, "matematik_yuzde": 56.4175, "fen_yuzde": 67.4175, "sosyal_yuzde": 80.67499999999998, "ingilizce_yuzde": 87.505, "din_yuzde": 72.69}, {"name": "Dilara BULUT", "class": "8B", "turkce_full": [null, 11.0, 14.33, null, null, 6.33, 9.33, 11.0, 10.0, null, null, null, null, null, 12.33, null, null, 11.33, 7.67, 12.67, 11.0], "matematik_full": [null, 4.33, 1.0, null, null, -2.33, 2.0, 1.0, 7.33, null, null, null, null, null, 1.33, null, null, 1.33, 0.33, 2.33, -0.67], "fen_full": [null, 4.67, 2.67, null, null, 9.0, 10.0, 10.67, 7.67, null, null, null, null, null, 5.67, null, null, 7.33, 5.67, 11.0, 7.33], "sosyal_full": [null, 4.33, 2.67, null, null, 3.67, 0.67, 2.67, 8.0, null, null, null, null, null, 5.0, null, null, 4.33, 2.67, 4.67, 1.33], "ingilizce_full": [null, 4.0, 4.67, null, null, 7.67, 2.67, 6.67, 7.33, null, null, null, null, null, 5.33, null, null, 3.67, 5.33, 7.67, 10.0], "din_full": [null, 4.33, 7.67, null, null, 6.0, 8.0, 5.33, 5.0, null, null, null, null, null, 6.33, null, null, 3.67, 6.33, 6.33, 6.0], "turkce": [11.0, 14.33, 6.33, 9.33, 11.0, 10.0, 12.33, 11.33, 7.67, 12.67, 11.0], "matematik": [4.33, 1.0, -2.33, 2.0, 1.0, 7.33, 1.33, 1.33, 0.33, 2.33, -0.67], "fen": [4.67, 2.67, 9.0, 10.0, 10.67, 7.67, 5.67, 7.33, 5.67, 11.0, 7.33], "sosyal": [4.33, 2.67, 3.67, 0.67, 2.67, 8.0, 5.0, 4.33, 2.67, 4.67, 1.33], "ingilizce": [4.0, 4.67, 7.67, 2.67, 6.67, 7.33, 5.33, 3.67, 5.33, 7.67, 10.0], "din": [4.33, 7.67, 6.0, 8.0, 5.33, 5.0, 6.33, 3.67, 6.33, 6.33, 6.0], "turkce_ort": 10.635454545454545, "matematik_ort": 1.6345454545454543, "fen_ort": 7.425454545454545, "sosyal_ort": 3.637272727272727, "ingilizce_ort": 5.909999999999999, "din_ort": 5.908181818181817, "turkce_yuzde": 53.17727272727273, "matematik_yuzde": 8.172727272727272, "fen_yuzde": 37.127272727272725, "sosyal_yuzde": 36.372727272727275, "ingilizce_yuzde": 59.099999999999994, "din_yuzde": 59.08181818181817}, {"name": "Ecrin Nur  CİNDİOĞLU", "class": "8B", "turkce_full": [20.0, 18.67, 18.67, 16.0, null, 18.67, 18.67, 17.33, 17.33, 17.67, 18.67, null, null, null, 18.67, 17.33, null, null, null, null, null], "matematik_full": [17.33, 18.67, 17.33, 18.67, null, 20.0, 18.67, 18.67, 16.0, 17.33, 18.67, null, null, null, 16.0, 16.0, null, null, null, null, null], "fen_full": [17.33, 18.67, 13.33, 20.0, null, 18.67, 17.33, 18.67, 18.67, 14.67, 17.33, null, null, null, 18.67, 17.33, null, null, null, null, null], "sosyal_full": [10.0, 10.0, 10.0, 8.67, null, 8.67, 10.0, 10.0, 10.0, 8.67, 8.67, null, null, null, 10.0, 10.0, null, null, null, null, null], "ingilizce_full": [10.0, 10.0, 8.67, 10.0, null, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, null, null, null, 10.0, 10.0, null, null, null, null, null], "din_full": [8.67, 10.0, 10.0, 8.67, null, 10.0, 10.0, 8.67, 10.0, 10.0, 10.0, null, null, null, 10.0, 8.67, null, null, null, null, null], "turkce": [20.0, 18.67, 18.67, 16.0, 18.67, 18.67, 17.33, 17.33, 17.67, 18.67, 18.67, 17.33], "matematik": [17.33, 18.67, 17.33, 18.67, 20.0, 18.67, 18.67, 16.0, 17.33, 18.67, 16.0, 16.0], "fen": [17.33, 18.67, 13.33, 20.0, 18.67, 17.33, 18.67, 18.67, 14.67, 17.33, 18.67, 17.33], "sosyal": [10.0, 10.0, 10.0, 8.67, 8.67, 10.0, 10.0, 10.0, 8.67, 8.67, 10.0, 10.0], "ingilizce": [10.0, 10.0, 8.67, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0], "din": [8.67, 10.0, 10.0, 8.67, 10.0, 10.0, 8.67, 10.0, 10.0, 10.0, 10.0, 8.67], "turkce_ort": 18.14, "matematik_ort": 17.778333333333336, "fen_ort": 17.555833333333336, "sosyal_ort": 9.556666666666667, "ingilizce_ort": 9.889166666666666, "din_ort": 9.556666666666667, "turkce_yuzde": 90.7, "matematik_yuzde": 88.89166666666668, "fen_yuzde": 87.77916666666667, "sosyal_yuzde": 95.56666666666666, "ingilizce_yuzde": 98.89166666666667, "din_yuzde": 95.56666666666666}, {"name": "Erdem UZER", "class": "8B", "turkce_full": [18.67, 17.33, 17.33, 17.33, 17.33, 20.0, 18.67, 14.67, null, 17.33, 14.67, null, 13.33, 13.33, 13.33, 9.33, 6.67, 10.67, 17.33, 17.33, 14.67], "matematik_full": [13.33, 16.33, 14.67, 13.33, 9.33, 13.33, 14.67, 14.67, null, 13.33, 14.67, null, 6.67, 16.0, 12.0, 9.33, 16.0, 14.67, 8.0, 9.33, 2.33], "fen_full": [18.67, 18.67, 12.0, 10.67, 14.67, 9.33, 18.67, 14.67, null, 17.33, 16.0, null, 14.67, 16.0, 18.67, 6.67, 12.0, 16.0, 14.67, 17.33, 16.0], "sosyal_full": [10.0, 10.0, 8.67, 10.0, 7.33, 8.67, 7.33, 10.0, null, 4.67, 7.33, null, 7.33, 7.33, 10.0, 8.67, 10.0, 10.0, 7.33, 8.67, 8.67], "ingilizce_full": [10.0, 5.0, 7.33, 10.0, 8.67, 8.67, 10.0, 10.0, null, 10.0, 8.67, null, 6.0, 6.0, 5.0, 8.67, 10.0, 10.0, 10.0, 8.67, 8.67], "din_full": [10.0, 10.0, 10.0, 10.0, 10.0, 7.33, 10.0, 10.0, null, 7.33, 4.67, null, 8.67, 10.0, 10.0, 3.33, 6.0, 6.0, 7.33, 4.67, 10.0], "turkce": [18.67, 17.33, 17.33, 17.33, 17.33, 20.0, 18.67, 14.67, 17.33, 14.67, 13.33, 13.33, 13.33, 9.33, 6.67, 10.67, 17.33, 17.33, 14.67], "matematik": [13.33, 16.33, 14.67, 13.33, 9.33, 13.33, 14.67, 14.67, 13.33, 14.67, 6.67, 16.0, 12.0, 9.33, 16.0, 14.67, 8.0, 9.33, 2.33], "fen": [18.67, 18.67, 12.0, 10.67, 14.67, 9.33, 18.67, 14.67, 17.33, 16.0, 14.67, 16.0, 18.67, 6.67, 12.0, 16.0, 14.67, 17.33, 16.0], "sosyal": [10.0, 10.0, 8.67, 10.0, 7.33, 8.67, 7.33, 10.0, 4.67, 7.33, 7.33, 7.33, 10.0, 8.67, 10.0, 10.0, 7.33, 8.67, 8.67], "ingilizce": [10.0, 5.0, 7.33, 10.0, 8.67, 8.67, 10.0, 10.0, 10.0, 8.67, 6.0, 6.0, 5.0, 8.67, 10.0, 10.0, 10.0, 8.67, 8.67], "din": [10.0, 10.0, 10.0, 10.0, 10.0, 7.33, 10.0, 10.0, 7.33, 4.67, 8.67, 10.0, 10.0, 3.33, 6.0, 6.0, 7.33, 4.67, 10.0], "turkce_ort": 15.227368421052631, "matematik_ort": 12.21, "fen_ort": 14.878421052631579, "sosyal_ort": 8.526315789473683, "ingilizce_ort": 8.492105263157892, "din_ort": 8.175263157894737, "turkce_yuzde": 76.13684210526316, "matematik_yuzde": 61.050000000000004, "fen_yuzde": 74.39210526315789, "sosyal_yuzde": 85.26315789473684, "ingilizce_yuzde": 84.92105263157892, "din_yuzde": 81.75263157894736}, {"name": "Gülce KISACIK", "class": "8B", "turkce_full": [17.33, 14.67, 18.67, 18.67, 20.0, 14.67, 18.67, 16.0, 14.67, 18.67, 16.0, null, 18.67, null, 17.33, 13.33, 10.67, null, 16.0, null, 12.0], "matematik_full": [2.67, 16.0, 6.67, 12.0, 9.67, 8.0, 3.0, 6.33, 11.67, 16.0, 8.0, null, 10.67, null, 2.67, 10.0, 6.67, null, 4.0, null, 0.67], "fen_full": [13.33, 17.33, 14.67, 10.67, 14.67, 14.67, 16.0, 14.67, 14.67, 10.67, 10.67, null, 14.67, null, 16.0, 14.67, 8.0, null, 9.33, null, 12.0], "sosyal_full": [7.33, 8.67, 8.67, 7.33, 7.33, 6.0, 8.67, 8.67, 7.33, 8.67, 6.0, null, 7.33, null, 7.33, 8.67, 8.67, null, 6.0, null, 6.0], "ingilizce_full": [8.67, 8.67, 8.67, 7.33, 10.0, 8.67, 8.67, 8.67, 8.67, 8.67, 10.0, null, 10.0, null, 7.33, 8.67, 10.0, null, 8.67, null, 8.67], "din_full": [7.33, 7.33, 8.67, 10.0, 7.33, 7.33, 8.67, 10.0, 7.33, 7.33, 8.67, null, 10.0, null, 7.33, 8.67, 10.0, null, 8.67, null, 7.33], "turkce": [17.33, 14.67, 18.67, 18.67, 20.0, 14.67, 18.67, 16.0, 14.67, 18.67, 16.0, 18.67, 17.33, 13.33, 10.67, 16.0, 12.0], "matematik": [2.67, 16.0, 6.67, 12.0, 9.67, 8.0, 3.0, 6.33, 11.67, 16.0, 8.0, 10.67, 2.67, 10.0, 6.67, 4.0, 0.67], "fen": [13.33, 17.33, 14.67, 10.67, 14.67, 14.67, 16.0, 14.67, 14.67, 10.67, 10.67, 14.67, 16.0, 14.67, 8.0, 9.33, 12.0], "sosyal": [7.33, 8.67, 8.67, 7.33, 7.33, 6.0, 8.67, 8.67, 7.33, 8.67, 6.0, 7.33, 7.33, 8.67, 8.67, 6.0, 6.0], "ingilizce": [8.67, 8.67, 8.67, 7.33, 10.0, 8.67, 8.67, 8.67, 8.67, 8.67, 10.0, 10.0, 7.33, 8.67, 10.0, 8.67, 8.67], "din": [7.33, 7.33, 8.67, 10.0, 7.33, 7.33, 8.67, 10.0, 7.33, 7.33, 8.67, 10.0, 7.33, 8.67, 10.0, 8.67, 7.33], "turkce_ort": 16.236470588235296, "matematik_ort": 7.922941176470588, "fen_ort": 13.33470588235294, "sosyal_ort": 7.568823529411764, "ingilizce_ort": 8.82529411764706, "din_ort": 8.352352941176472, "turkce_yuzde": 81.18235294117649, "matematik_yuzde": 39.61470588235294, "fen_yuzde": 66.6735294117647, "sosyal_yuzde": 75.68823529411765, "ingilizce_yuzde": 88.2529411764706, "din_yuzde": 83.52352941176471}, {"name": "Kaan YILMAZ", "class": "8B", "turkce_full": [17.33, 12.0, 14.67, 10.67, 17.33, null, 16.0, 16.0, null, 16.0, 16.0, null, 10.67, 17.33, 17.33, 12.33, 8.0, 17.33, 12.0, 16.0, 13.33], "matematik_full": [13.33, 10.67, 1.67, 9.67, 2.67, null, 5.67, 4.67, null, 13.67, 6.33, null, 2.33, 7.67, 0.67, 4.67, 10.0, 1.67, 6.0, 4.67, 6.0], "fen_full": [9.33, 14.67, 8.0, 6.67, 5.33, null, 12.0, 8.0, null, 13.33, 13.33, null, 9.33, 13.33, 12.0, 8.0, 10.67, 14.67, 10.67, 16.0, 8.0], "sosyal_full": [8.67, 10.0, 10.0, 10.0, 6.0, null, 6.0, 10.0, null, 8.67, 7.33, null, 4.67, 7.33, 7.33, 7.33, 8.67, 10.0, 10.0, 7.33, 8.67], "ingilizce_full": [8.67, 7.33, 7.33, 10.0, 10.0, null, 10.0, 7.33, null, 8.67, 8.67, null, 8.67, 10.0, 7.33, 10.0, 7.33, 10.0, 10.0, 10.0, 8.67], "din_full": [10.0, 8.67, 8.67, 8.67, 10.0, null, 8.67, 8.67, null, 8.67, 6.0, null, 7.33, 7.33, 9.0, 7.33, 7.33, 7.33, 10.0, 8.67, 8.67], "turkce": [17.33, 12.0, 14.67, 10.67, 17.33, 16.0, 16.0, 16.0, 16.0, 10.67, 17.33, 17.33, 12.33, 8.0, 17.33, 12.0, 16.0, 13.33], "matematik": [13.33, 10.67, 1.67, 9.67, 2.67, 5.67, 4.67, 13.67, 6.33, 2.33, 7.67, 0.67, 4.67, 10.0, 1.67, 6.0, 4.67, 6.0], "fen": [9.33, 14.67, 8.0, 6.67, 5.33, 12.0, 8.0, 13.33, 13.33, 9.33, 13.33, 12.0, 8.0, 10.67, 14.67, 10.67, 16.0, 8.0], "sosyal": [8.67, 10.0, 10.0, 10.0, 6.0, 6.0, 10.0, 8.67, 7.33, 4.67, 7.33, 7.33, 7.33, 8.67, 10.0, 10.0, 7.33, 8.67], "ingilizce": [8.67, 7.33, 7.33, 10.0, 10.0, 10.0, 7.33, 8.67, 8.67, 8.67, 10.0, 7.33, 10.0, 7.33, 10.0, 10.0, 10.0, 8.67], "din": [10.0, 8.67, 8.67, 8.67, 10.0, 8.67, 8.67, 8.67, 6.0, 7.33, 7.33, 9.0, 7.33, 7.33, 7.33, 10.0, 8.67, 8.67], "turkce_ort": 14.462222222222222, "matematik_ort": 6.223888888888888, "fen_ort": 10.740555555555554, "sosyal_ort": 8.222222222222221, "ingilizce_ort": 8.888888888888888, "din_ort": 8.389444444444443, "turkce_yuzde": 72.3111111111111, "matematik_yuzde": 31.119444444444444, "fen_yuzde": 53.70277777777777, "sosyal_yuzde": 82.22222222222221, "ingilizce_yuzde": 88.88888888888887, "din_yuzde": 83.89444444444443}, {"name": "Mehmet Görkem AKPEK", "class": "8B", "turkce_full": [18.67, 18.67, 20.0, 20.0, 17.33, 18.67, 16.0, 20.0, 17.33, 20.0, 18.67, null, 20.0, 20.0, 20.0, 16.0, 16.0, 18.67, 17.33, 20.0, 18.67], "matematik_full": [18.67, 20.0, 18.67, 18.67, 18.67, 18.67, 18.67, 18.67, 18.67, 17.33, 20.0, null, 20.0, 18.67, 20.0, 14.0, 14.67, 18.67, 19.0, 20.0, 18.67], "fen_full": [20.0, 18.67, 20.0, 20.0, 20.0, 18.67, 18.67, 20.0, 18.67, 20.0, 16.0, null, 17.33, 20.0, 18.67, 20.0, 18.67, 20.0, 20.0, 20.0, 20.0], "sosyal_full": [10.0, 10.0, 8.67, 10.0, 10.0, 10.0, 10.0, 10.0, 7.33, 10.0, 8.67, null, 10.0, 8.67, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0], "ingilizce_full": [10.0, 10.0, 8.67, 10.0, 10.0, 10.0, 10.0, 8.67, 10.0, 10.0, 10.0, null, 10.0, 10.0, 10.0, 10.0, 8.67, 10.0, 10.0, 10.0, 10.0], "din_full": [10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 8.67, 10.0, 8.67, 7.33, 7.33, null, 10.0, 7.33, 10.0, 10.0, 10.0, 10.0, 8.67, 10.0, 10.0], "turkce": [18.67, 18.67, 20.0, 20.0, 17.33, 18.67, 16.0, 20.0, 17.33, 20.0, 18.67, 20.0, 20.0, 20.0, 16.0, 16.0, 18.67, 17.33, 20.0, 18.67], "matematik": [18.67, 20.0, 18.67, 18.67, 18.67, 18.67, 18.67, 18.67, 18.67, 17.33, 20.0, 20.0, 18.67, 20.0, 14.0, 14.67, 18.67, 19.0, 20.0, 18.67], "fen": [20.0, 18.67, 20.0, 20.0, 20.0, 18.67, 18.67, 20.0, 18.67, 20.0, 16.0, 17.33, 20.0, 18.67, 20.0, 18.67, 20.0, 20.0, 20.0, 20.0], "sosyal": [10.0, 10.0, 8.67, 10.0, 10.0, 10.0, 10.0, 10.0, 7.33, 10.0, 8.67, 10.0, 8.67, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0], "ingilizce": [10.0, 10.0, 8.67, 10.0, 10.0, 10.0, 10.0, 8.67, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 8.67, 10.0, 10.0, 10.0, 10.0], "din": [10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 8.67, 10.0, 8.67, 7.33, 7.33, 10.0, 7.33, 10.0, 10.0, 10.0, 10.0, 8.67, 10.0, 10.0], "turkce_ort": 18.600500000000004, "matematik_ort": 18.5185, "fen_ort": 19.267500000000002, "sosyal_ort": 9.667, "ingilizce_ort": 9.8005, "din_ort": 9.399999999999999, "turkce_yuzde": 93.00250000000003, "matematik_yuzde": 92.5925, "fen_yuzde": 96.3375, "sosyal_yuzde": 96.67, "ingilizce_yuzde": 98.005, "din_yuzde": 93.99999999999999}, {"name": "Su GÖZÜBÜYÜK", "class": "8B", "turkce_full": [14.67, 13.33, 18.67, 16.33, null, null, 16.0, 14.67, 13.33, 13.33, null, null, 18.67, 17.33, 16.0, 12.0, null, 14.67, 17.33, 17.33, 16.0], "matematik_full": [14.67, 14.67, 12.0, 11.0, null, null, 15.33, 9.33, 16.0, 13.33, null, null, 15.0, 9.33, 10.67, 10.67, null, 13.67, 12.0, 12.0, 9.33], "fen_full": [12.0, 17.33, 12.0, 14.67, null, null, 16.0, 17.33, 16.0, 10.67, null, null, 12.0, 12.0, 14.67, 6.67, null, 12.0, 10.67, 16.0, 13.33], "sosyal_full": [7.33, 6.0, 8.67, 10.0, null, null, 7.33, 8.67, 7.33, 6.0, null, null, 6.0, 6.0, 4.67, 4.67, null, 8.67, 6.0, 7.33, 7.33], "ingilizce_full": [7.33, 8.67, 8.67, 8.67, null, null, 8.67, 10.0, 10.0, 8.67, null, null, 7.33, 4.67, 6.0, 7.33, null, 8.67, 10.0, 10.0, 8.67], "din_full": [7.33, 9.0, 6.0, 10.0, null, null, 6.0, 10.0, 7.33, 4.67, null, null, 7.33, 4.67, 10.0, 6.0, null, 2.0, 7.33, 8.67, 10.0], "turkce": [14.67, 13.33, 18.67, 16.33, 16.0, 14.67, 13.33, 13.33, 18.67, 17.33, 16.0, 12.0, 14.67, 17.33, 17.33, 16.0], "matematik": [14.67, 14.67, 12.0, 11.0, 15.33, 9.33, 16.0, 13.33, 15.0, 9.33, 10.67, 10.67, 13.67, 12.0, 12.0, 9.33], "fen": [12.0, 17.33, 12.0, 14.67, 16.0, 17.33, 16.0, 10.67, 12.0, 12.0, 14.67, 6.67, 12.0, 10.67, 16.0, 13.33], "sosyal": [7.33, 6.0, 8.67, 10.0, 7.33, 8.67, 7.33, 6.0, 6.0, 6.0, 4.67, 4.67, 8.67, 6.0, 7.33, 7.33], "ingilizce": [7.33, 8.67, 8.67, 8.67, 8.67, 10.0, 10.0, 8.67, 7.33, 4.67, 6.0, 7.33, 8.67, 10.0, 10.0, 8.67], "din": [7.33, 9.0, 6.0, 10.0, 6.0, 10.0, 7.33, 4.67, 7.33, 4.67, 10.0, 6.0, 2.0, 7.33, 8.67, 10.0], "turkce_ort": 15.60375, "matematik_ort": 12.4375, "fen_ort": 13.33375, "sosyal_ort": 7.0, "ingilizce_ort": 8.334375000000001, "din_ort": 7.270625, "turkce_yuzde": 78.01875, "matematik_yuzde": 62.18749999999999, "fen_yuzde": 66.66875, "sosyal_yuzde": 70.0, "ingilizce_yuzde": 83.34375000000001, "din_yuzde": 72.70625}, {"name": "Yavuz Selim TÖREN", "class": "8B", "turkce_full": [18.67, 16.0, 14.67, 13.33, 16.0, 12.0, 16.0, 10.67, 13.33, 12.0, 12.0, null, 18.67, 18.67, 16.0, 12.0, 10.67, 18.67, 14.67, 16.0, 16.0], "matematik_full": [14.67, 17.33, 13.33, 9.67, 16.0, 8.33, 17.33, 16.0, 14.67, 17.33, 18.0, null, 17.33, 16.0, 14.67, 16.0, 20.0, 18.67, 14.67, 11.0, 13.67], "fen_full": [14.67, 13.33, 13.33, 16.0, 14.67, 10.67, 17.33, 16.0, 16.0, 17.33, 17.33, null, 13.67, 17.33, 19.0, 16.0, 16.0, 12.0, 14.67, 18.67, 17.33], "sosyal_full": [10.0, 10.0, 10.0, 10.0, 8.67, 10.0, 7.33, 10.0, 6.0, 7.33, 10.0, null, 7.33, 7.33, 6.0, 4.67, 8.67, 7.33, 8.67, 8.67, 8.67], "ingilizce_full": [10.0, 10.0, 8.67, 10.0, 10.0, 7.33, 10.0, 8.67, 10.0, 8.67, 8.67, null, 8.67, 8.67, 10.0, 10.0, 8.67, 8.67, 10.0, 10.0, 10.0], "din_full": [6.0, 6.0, 7.33, 10.0, 6.0, 7.33, 7.33, 10.0, 7.33, 8.67, 7.67, null, 7.33, 4.67, 6.0, 6.0, 7.33, 4.67, 10.0, 6.0, 10.0], "turkce": [18.67, 16.0, 14.67, 13.33, 16.0, 12.0, 16.0, 10.67, 13.33, 12.0, 12.0, 18.67, 18.67, 16.0, 12.0, 10.67, 18.67, 14.67, 16.0, 16.0], "matematik": [14.67, 17.33, 13.33, 9.67, 16.0, 8.33, 17.33, 16.0, 14.67, 17.33, 18.0, 17.33, 16.0, 14.67, 16.0, 20.0, 18.67, 14.67, 11.0, 13.67], "fen": [14.67, 13.33, 13.33, 16.0, 14.67, 10.67, 17.33, 16.0, 16.0, 17.33, 17.33, 13.67, 17.33, 19.0, 16.0, 16.0, 12.0, 14.67, 18.67, 17.33], "sosyal": [10.0, 10.0, 10.0, 10.0, 8.67, 10.0, 7.33, 10.0, 6.0, 7.33, 10.0, 7.33, 7.33, 6.0, 4.67, 8.67, 7.33, 8.67, 8.67, 8.67], "ingilizce": [10.0, 10.0, 8.67, 10.0, 10.0, 7.33, 10.0, 8.67, 10.0, 8.67, 8.67, 8.67, 8.67, 10.0, 10.0, 8.67, 8.67, 10.0, 10.0, 10.0], "din": [6.0, 6.0, 7.33, 10.0, 6.0, 7.33, 7.33, 10.0, 7.33, 8.67, 7.67, 7.33, 4.67, 6.0, 6.0, 7.33, 4.67, 10.0, 6.0, 10.0], "turkce_ort": 14.801000000000002, "matematik_ort": 15.233500000000001, "fen_ort": 15.5665, "sosyal_ort": 8.333499999999997, "ingilizce_ort": 9.3345, "din_ort": 7.2829999999999995, "turkce_yuzde": 74.00500000000001, "matematik_yuzde": 76.1675, "fen_yuzde": 77.8325, "sosyal_yuzde": 83.33499999999997, "ingilizce_yuzde": 93.345, "din_yuzde": 72.83}, {"name": "Zeynep Beren BAYRAM", "class": "8B", "turkce_full": [18.67, 20.0, 18.67, 17.33, 17.33, 18.67, 18.67, 17.33, 18.67, 17.33, 14.67, null, 18.67, null, 20.0, 18.67, 8.0, 17.33, 20.0, 20.0, 18.67], "matematik_full": [17.33, 18.67, 16.0, 17.33, 14.67, 14.67, 16.0, 14.67, 16.0, 17.33, 17.33, null, 17.33, null, 13.33, 13.33, 20.0, 20.0, 10.67, 13.67, 13.33], "fen_full": [17.33, 20.0, 14.67, 18.67, 12.0, 12.0, 16.0, 17.33, 13.33, 17.33, 18.67, null, 14.67, null, 16.0, 17.33, 18.67, 17.33, 16.0, 20.0, 18.67], "sosyal_full": [10.0, 8.67, 10.0, 10.0, 6.0, 10.0, 8.67, 4.67, 7.33, 7.33, 8.67, null, 7.33, null, 10.0, 6.0, 7.33, 7.33, 10.0, 8.67, 8.67], "ingilizce_full": [10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, null, 10.0, null, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0], "din_full": [7.33, 8.67, 10.0, 8.67, 8.67, 10.0, 8.67, 8.67, 7.33, 8.67, 8.67, null, 8.67, null, 8.67, 7.33, 8.67, 10.0, 8.67, 7.33, 10.0], "turkce": [18.67, 20.0, 18.67, 17.33, 17.33, 18.67, 18.67, 17.33, 18.67, 17.33, 14.67, 18.67, 20.0, 18.67, 8.0, 17.33, 20.0, 20.0, 18.67], "matematik": [17.33, 18.67, 16.0, 17.33, 14.67, 14.67, 16.0, 14.67, 16.0, 17.33, 17.33, 17.33, 13.33, 13.33, 20.0, 20.0, 10.67, 13.67, 13.33], "fen": [17.33, 20.0, 14.67, 18.67, 12.0, 12.0, 16.0, 17.33, 13.33, 17.33, 18.67, 14.67, 16.0, 17.33, 18.67, 17.33, 16.0, 20.0, 18.67], "sosyal": [10.0, 8.67, 10.0, 10.0, 6.0, 10.0, 8.67, 4.67, 7.33, 7.33, 8.67, 7.33, 10.0, 6.0, 7.33, 7.33, 10.0, 8.67, 8.67], "ingilizce": [10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0], "din": [7.33, 8.67, 10.0, 8.67, 8.67, 10.0, 8.67, 8.67, 7.33, 8.67, 8.67, 8.67, 8.67, 7.33, 8.67, 10.0, 8.67, 7.33, 10.0], "turkce_ort": 17.82526315789474, "matematik_ort": 15.87684210526316, "fen_ort": 16.631578947368425, "sosyal_ort": 8.245789473684209, "ingilizce_ort": 10.0, "din_ort": 8.667894736842106, "turkce_yuzde": 89.1263157894737, "matematik_yuzde": 79.3842105263158, "fen_yuzde": 83.15789473684212, "sosyal_yuzde": 82.45789473684209, "ingilizce_yuzde": 100.0, "din_yuzde": 86.67894736842105}, {"name": "Zeynep Serra KURT", "class": "8B", "turkce_full": [20.0, 16.0, 17.33, 16.0, 18.67, 16.0, 18.67, 17.33, 16.0, 16.0, 18.67, null, 17.33, 14.67, 16.0, 12.0, 9.33, 17.33, 16.0, 20.0, 20.0], "matematik_full": [16.0, 18.67, 18.67, 12.67, 14.67, 14.67, 16.0, 13.33, 16.0, 17.33, 14.67, null, 14.67, 17.33, 12.0, 13.33, 17.33, 17.67, 14.67, 11.67, 13.33], "fen_full": [14.67, 18.67, 14.67, 18.67, 14.67, 13.33, 17.33, 13.33, 13.33, 18.67, 16.0, null, 17.33, 16.0, 18.67, 13.33, 14.67, 18.67, 14.67, 19.0, 14.67], "sosyal_full": [10.0, 10.0, 6.0, 10.0, 8.67, 10.0, 10.0, 10.0, 6.0, 8.67, 7.33, null, 6.0, 7.33, 10.0, 7.33, 8.67, 8.67, 8.67, 8.67, 10.0], "ingilizce_full": [10.0, 10.0, 10.0, 8.67, 10.0, 10.0, 10.0, 8.67, 8.67, 10.0, 10.0, null, 10.0, 10.0, 8.67, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0], "din_full": [8.67, 8.67, 10.0, 10.0, 8.67, 8.67, 7.33, 10.0, 7.33, 8.67, 10.0, null, 10.0, 7.33, 10.0, 8.67, 10.0, 7.33, 8.67, 10.0, 10.0], "turkce": [20.0, 16.0, 17.33, 16.0, 18.67, 16.0, 18.67, 17.33, 16.0, 16.0, 18.67, 17.33, 14.67, 16.0, 12.0, 9.33, 17.33, 16.0, 20.0, 20.0], "matematik": [16.0, 18.67, 18.67, 12.67, 14.67, 14.67, 16.0, 13.33, 16.0, 17.33, 14.67, 14.67, 17.33, 12.0, 13.33, 17.33, 17.67, 14.67, 11.67, 13.33], "fen": [14.67, 18.67, 14.67, 18.67, 14.67, 13.33, 17.33, 13.33, 13.33, 18.67, 16.0, 17.33, 16.0, 18.67, 13.33, 14.67, 18.67, 14.67, 19.0, 14.67], "sosyal": [10.0, 10.0, 6.0, 10.0, 8.67, 10.0, 10.0, 10.0, 6.0, 8.67, 7.33, 6.0, 7.33, 10.0, 7.33, 8.67, 8.67, 8.67, 8.67, 10.0], "ingilizce": [10.0, 10.0, 10.0, 8.67, 10.0, 10.0, 10.0, 8.67, 8.67, 10.0, 10.0, 10.0, 10.0, 8.67, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0], "din": [8.67, 8.67, 10.0, 10.0, 8.67, 8.67, 7.33, 10.0, 7.33, 8.67, 10.0, 10.0, 7.33, 10.0, 8.67, 10.0, 7.33, 8.67, 10.0, 10.0], "turkce_ort": 16.6665, "matematik_ort": 15.234, "fen_ort": 16.017500000000002, "sosyal_ort": 8.600499999999998, "ingilizce_ort": 9.734, "din_ort": 9.000499999999999, "turkce_yuzde": 83.3325, "matematik_yuzde": 76.17, "fen_yuzde": 80.0875, "sosyal_yuzde": 86.00499999999998, "ingilizce_yuzde": 97.34, "din_yuzde": 90.005}];
+        let filteredStudents = [...allStudentsData];
+        let currentClassFilter = 'ALL';
+        let currentWeakSubjectFilter = 'NONE';
+        let currentStudent = null;
+        let subjectChart = null;
+        let trendChart = null;
+        let targetChart = null;
+        
+        window.onload = function() {
+            // Sınıf filtresi butonlarını dinle
+            document.querySelectorAll('.class-filter-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    document.querySelectorAll('.class-filter-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    currentClassFilter = this.getAttribute('data-class');
+                    applyFilters();
+                });
+            });
+            
+            // Gelişim fırsatı butonlarını dinle
+            document.querySelectorAll('.weak-filter-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    document.querySelectorAll('.weak-filter-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    currentWeakSubjectFilter = this.getAttribute('data-subject');
+                    applyFilters();
+                });
+            });
+            
+            // İlk yükleme
+            applyFilters();
+        };
+        
+        function applyFilters() {
+            // Önce sınıf filtresini uygula
+            let result = [...allStudentsData];
+            
+            if (currentClassFilter !== 'ALL') {
+                result = result.filter(s => s.class === currentClassFilter);
+            }
+            
+            // Sonra gelişim fırsatı filtresini uygula
+            if (currentWeakSubjectFilter !== 'NONE') {
+                result = result.filter(student => {
+                    // Öğrencinin en zayıf dersini bul
+                    const subjects = [
+                        { name: 'turkce', percent: student.turkce_yuzde },
+                        { name: 'matematik', percent: student.matematik_yuzde },
+                        { name: 'fen', percent: student.fen_yuzde },
+                        { name: 'sosyal', percent: student.sosyal_yuzde },
+                        { name: 'ingilizce', percent: student.ingilizce_yuzde },
+                        { name: 'din', percent: student.din_yuzde }
+                    ];
+                    
+                    subjects.sort((a, b) => a.percent - b.percent);
+                    const weakestSubject = subjects[0].name;
+                    
+                    return weakestSubject === currentWeakSubjectFilter;
+                });
+            }
+            
+            filteredStudents = result;
+            populateStudentSelector();
+            
+            if (filteredStudents.length > 0) {
+                document.getElementById('studentSelect').value = 0;
+                updateDashboard();
+            } else {
+                // Filtre sonucu öğrenci yoksa uyarı göster
+                document.getElementById('studentInfo').innerHTML = `
+                    <strong style="color: #fff;">⚠️ Bu filtre kombinasyonunda öğrenci bulunamadı!</strong>
+                `;
+                document.getElementById('statsGrid').innerHTML = '';
+            }
+        }
+        
+        function populateStudentSelector() {
+            const select = document.getElementById('studentSelect');
+            select.innerHTML = '';
+            
+            filteredStudents.forEach((student, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = `${student.class} - ${student.name}`;
+                select.appendChild(option);
+            });
+        }
+        
+        function updateDashboard() {
+            const selectedIndex = document.getElementById('studentSelect').value;
+            currentStudent = filteredStudents[selectedIndex];
+            
+            updateStudentInfo();
+            updateStatsCards();
+            updateSubjectChart();
+            updateTrendChart();
+            updateTargetChart();
+            updateInsights();
+        }
+        
+        function updateStudentInfo() {
+            const info = document.getElementById('studentInfo');
+            const totalAvg = (
+                currentStudent.turkce_yuzde + 
+                currentStudent.matematik_yuzde + 
+                currentStudent.fen_yuzde + 
+                currentStudent.sosyal_yuzde + 
+                currentStudent.ingilizce_yuzde + 
+                currentStudent.din_yuzde
+            ) / 6;
+            
+            info.innerHTML = `
+                <span><strong>${currentStudent.class}</strong> Sınıfı - 
+                <strong>${currentStudent.name}</strong> - 
+                Genel Ortalama: <strong>%${totalAvg.toFixed(1)}</strong></span>
+                <button onclick="openProfile()" style="
+                    margin-left: 20px;
+                    padding: 8px 20px;
+                    background: white;
+                    color: #667eea;
+                    border: none;
+                    border-radius: 20px;
+                    font-weight: bold;
+                    font-size: 0.95em;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                " onmouseover="this.style.background='#f0f0ff'" onmouseout="this.style.background='white'">
+                    📊 Profili Görüntüle
+                </button>
+            `;
+        }
+        
+        function updateStatsCards() {
+            const statsGrid = document.getElementById('statsGrid');
+            
+            const subjects = [
+                { name: 'turkce', title: 'Türkçe', max: 20, emoji: '📖' },
+                { name: 'matematik', title: 'Matematik', max: 20, emoji: '🔢' },
+                { name: 'fen', title: 'Fen Bilimleri', max: 20, emoji: '🔬' },
+                { name: 'sosyal', title: 'T.C. İnkılap (Sosyal)', max: 10, emoji: '🌍' },
+                { name: 'ingilizce', title: 'İngilizce', max: 10, emoji: '🌐' },
+                { name: 'din', title: 'Din Kültürü', max: 10, emoji: '📿' }
+            ];
+            
+            statsGrid.innerHTML = '';
+            
+            subjects.forEach(subject => {
+                const avg = currentStudent[subject.name + '_ort'];
+                const percentage = currentStudent[subject.name + '_yuzde'];
+                
+                const card = document.createElement('div');
+                card.className = `stat-card ${subject.name}`;
+                card.innerHTML = `
+                    <div class="stat-emoji">${subject.emoji}</div>
+                    <div class="stat-title">${subject.title}</div>
+                    <div class="stat-percentage">%${percentage.toFixed(0)}</div>
+                    <div class="stat-detail">${avg.toFixed(1)} / ${subject.max} net</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${percentage}%"></div>
+                    </div>
+                `;
+                statsGrid.appendChild(card);
+            });
+        }
+        
+        function updateSubjectChart() {
+            const ctx = document.getElementById('subjectChart');
+            
+            if (subjectChart) {
+                subjectChart.destroy();
+            }
+            
+            const percentages = [
+                currentStudent.turkce_yuzde,
+                currentStudent.matematik_yuzde,
+                currentStudent.fen_yuzde,
+                currentStudent.sosyal_yuzde,
+                currentStudent.ingilizce_yuzde,
+                currentStudent.din_yuzde
+            ];
+            
+            subjectChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Türkçe', 'Matematik', 'Fen', 'Sosyal', 'İngilizce', 'Din'],
+                    datasets: [{
+                        label: 'Başarı Yüzdesi',
+                        data: percentages,
+                        backgroundColor: [
+                            'rgba(231, 76, 60, 0.8)',
+                            'rgba(52, 152, 219, 0.8)',
+                            'rgba(46, 204, 113, 0.8)',
+                            'rgba(243, 156, 18, 0.8)',
+                            'rgba(155, 89, 182, 0.8)',
+                            'rgba(26, 188, 156, 0.8)'
+                        ],
+                        borderColor: [
+                            'rgba(231, 76, 60, 1)',
+                            'rgba(52, 152, 219, 1)',
+                            'rgba(46, 204, 113, 1)',
+                            'rgba(243, 156, 18, 1)',
+                            'rgba(155, 89, 182, 1)',
+                            'rgba(26, 188, 156, 1)'
+                        ],
+                        borderWidth: 2
+                    }, {
+                        label: 'Hedef (100%)',
+                        data: [100, 100, 100, 100, 100, 100],
+                        type: 'line',
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        borderWidth: 3,
+                        borderDash: [5, 5],
+                        fill: false,
+                        pointRadius: 5,
+                        pointBackgroundColor: 'rgba(255, 99, 132, 1)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 110,
+                            ticks: {
+                                callback: function(value) {
+                                    return '%' + value;
+                                },
+                                font: { size: 12 }
+                            }
+                        },
+                        x: {
+                            ticks: { font: { size: 12 } }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: { font: { size: 14 } }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': %' + context.parsed.y.toFixed(1);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function updateTrendChart() {
+            const ctx = document.getElementById('trendChart');
+            
+            if (trendChart) {
+                trendChart.destroy();
+            }
+            
+            const maxExams = Math.max(
+                currentStudent.turkce.length,
+                currentStudent.matematik.length,
+                currentStudent.fen.length,
+                currentStudent.sosyal.length,
+                currentStudent.ingilizce.length,
+                currentStudent.din.length
+            );
+            
+            const examLabels = [];
+            for (let i = 1; i <= Math.min(maxExams, 21); i++) {
+                examLabels.push(`S${i}`);
+            }
+            
+            // Tüm derslerin yüzdelerini hesapla
+            const turkcePercent = currentStudent.turkce.slice(0, 21).map(net => (net / 20) * 100);
+            const matematikPercent = currentStudent.matematik.slice(0, 21).map(net => (net / 20) * 100);
+            const fenPercent = currentStudent.fen.slice(0, 21).map(net => (net / 20) * 100);
+            const sosyalPercent = currentStudent.sosyal.slice(0, 21).map(net => (net / 10) * 100);
+            const ingilizcePercent = currentStudent.ingilizce.slice(0, 21).map(net => (net / 10) * 100);
+            const dinPercent = currentStudent.din.slice(0, 21).map(net => (net / 10) * 100);
+            
+            const datasets = [
+                {
+                    label: 'Türkçe',
+                    data: turkcePercent,
+                    borderColor: 'rgba(231, 76, 60, 1)',
+                    backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                    tension: 0.4,
+                    borderWidth: 3,
+                    hidden: false
+                },
+                {
+                    label: 'Matematik',
+                    data: matematikPercent,
+                    borderColor: 'rgba(52, 152, 219, 1)',
+                    backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                    tension: 0.4,
+                    borderWidth: 3,
+                    hidden: false
+                },
+                {
+                    label: 'Fen',
+                    data: fenPercent,
+                    borderColor: 'rgba(46, 204, 113, 1)',
+                    backgroundColor: 'rgba(46, 204, 113, 0.1)',
+                    tension: 0.4,
+                    borderWidth: 3,
+                    hidden: false
+                },
+                {
+                    label: 'Sosyal',
+                    data: sosyalPercent,
+                    borderColor: 'rgba(243, 156, 18, 1)',
+                    backgroundColor: 'rgba(243, 156, 18, 0.1)',
+                    tension: 0.4,
+                    borderWidth: 3,
+                    hidden: false
+                },
+                {
+                    label: 'İngilizce',
+                    data: ingilizcePercent,
+                    borderColor: 'rgba(155, 89, 182, 1)',
+                    backgroundColor: 'rgba(155, 89, 182, 0.1)',
+                    tension: 0.4,
+                    borderWidth: 3,
+                    hidden: false
+                },
+                {
+                    label: 'Din',
+                    data: dinPercent,
+                    borderColor: 'rgba(26, 188, 156, 1)',
+                    backgroundColor: 'rgba(26, 188, 156, 0.1)',
+                    tension: 0.4,
+                    borderWidth: 3,
+                    hidden: false
+                }
+            ];
+            
+            trendChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: examLabels,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 110,
+                            ticks: {
+                                callback: function(value) {
+                                    return '%' + value;
+                                },
+                                font: { size: 12 }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: { 
+                                font: { size: 14 },
+                                padding: 15
+                            },
+                            onClick: function(e, legendItem, legend) {
+                                const index = legendItem.datasetIndex;
+                                const chart = legend.chart;
+                                
+                                // Renk tanımları
+                                const colors = [
+                                    { normal: 'rgba(231, 76, 60, 1)', faded: 'rgba(231, 76, 60, 0.2)' },
+                                    { normal: 'rgba(52, 152, 219, 1)', faded: 'rgba(52, 152, 219, 0.2)' },
+                                    { normal: 'rgba(46, 204, 113, 1)', faded: 'rgba(46, 204, 113, 0.2)' },
+                                    { normal: 'rgba(243, 156, 18, 1)', faded: 'rgba(243, 156, 18, 0.2)' },
+                                    { normal: 'rgba(155, 89, 182, 1)', faded: 'rgba(155, 89, 182, 0.2)' },
+                                    { normal: 'rgba(26, 188, 156, 1)', faded: 'rgba(26, 188, 156, 0.2)' }
+                                ];
+                                
+                                // Tıklanan ders zaten tek başına mı kontrol et
+                                const allNormal = chart.data.datasets.every((ds, i) => ds.borderWidth === 3);
+                                const onlyThisFocused = chart.data.datasets[index].borderWidth === 4;
+                                
+                                if (onlyThisFocused) {
+                                    // Tek başına ise, hepsini normale döndür
+                                    chart.data.datasets.forEach((dataset, i) => {
+                                        dataset.borderWidth = 3;
+                                        dataset.borderColor = colors[i].normal;
+                                    });
+                                } else {
+                                    // Tıklananı öne çıkar, diğerlerini soluklaştır
+                                    chart.data.datasets.forEach((dataset, i) => {
+                                        if (i === index) {
+                                            dataset.borderWidth = 4;
+                                            dataset.borderColor = colors[i].normal;
+                                        } else {
+                                            dataset.borderWidth = 1.5;
+                                            dataset.borderColor = colors[i].faded;
+                                        }
+                                    });
+                                }
+                                
+                                chart.update();
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': %' + context.parsed.y.toFixed(1);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function updateTargetChart() {
+            const ctx = document.getElementById('targetChart');
+            
+            if (targetChart) {
+                targetChart.destroy();
+            }
+            
+            const subjects = ['Türkçe', 'Matematik', 'Fen', 'Sosyal', 'İngilizce', 'Din'];
+            const currentPercents = [
+                currentStudent.turkce_yuzde,
+                currentStudent.matematik_yuzde,
+                currentStudent.fen_yuzde,
+                currentStudent.sosyal_yuzde,
+                currentStudent.ingilizce_yuzde,
+                currentStudent.din_yuzde
+            ];
+            const gaps = currentPercents.map(p => Math.max(0, 100 - p));
+            
+            targetChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: subjects,
+                    datasets: [{
+                        label: 'Mevcut Başarı',
+                        data: currentPercents,
+                        backgroundColor: 'rgba(46, 204, 113, 0.8)',
+                        borderColor: 'rgba(46, 204, 113, 1)',
+                        borderWidth: 2
+                    }, {
+                        label: 'Hedefe Kalan',
+                        data: gaps,
+                        backgroundColor: 'rgba(231, 76, 60, 0.5)',
+                        borderColor: 'rgba(231, 76, 60, 1)',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    scales: {
+                        x: { stacked: true },
+                        y: {
+                            stacked: true,
+                            max: 110,
+                            ticks: {
+                                callback: function(value) {
+                                    return '%' + value;
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: true },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': %' + context.parsed.y.toFixed(1);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function updateInsights() {
+            const content = document.getElementById('insightContent');
+            let html = '';
+            
+            const subjects = [
+                { name: 'Türkçe', percent: currentStudent.turkce_yuzde, avg: currentStudent.turkce_ort, max: 20 },
+                { name: 'Matematik', percent: currentStudent.matematik_yuzde, avg: currentStudent.matematik_ort, max: 20 },
+                { name: 'Fen', percent: currentStudent.fen_yuzde, avg: currentStudent.fen_ort, max: 20 },
+                { name: 'Sosyal', percent: currentStudent.sosyal_yuzde, avg: currentStudent.sosyal_ort, max: 10 },
+                { name: 'İngilizce', percent: currentStudent.ingilizce_yuzde, avg: currentStudent.ingilizce_ort, max: 10 },
+                { name: 'Din', percent: currentStudent.din_yuzde, avg: currentStudent.din_ort, max: 10 }
+            ];
+            
+            subjects.sort((a, b) => b.percent - a.percent);
+            
+            const strongest = subjects[0];
+            const weakest = subjects[subjects.length - 1];
+            
+            html += `
+                <div class="insight-item">
+                    <strong>🌟 En Güçlü Ders:</strong> ${strongest.name} 
+                    <br><span style="font-size: 1.2em; color: #2ecc71;">%${strongest.percent.toFixed(1)}</span> 
+                    (${strongest.avg.toFixed(1)}/${strongest.max} net)
+                    <em>Harika bir performans! Bu başarıyı sürdürmek için düzenli çalışmaya devam et.</em>
+                </div>
+                
+                <div class="insight-item">
+                    <strong>💪 Gelişim Fırsatı:</strong> ${weakest.name} 
+                    <br><span style="font-size: 1.2em; color: #e74c3c;">%${weakest.percent.toFixed(1)}</span> 
+                    (${weakest.avg.toFixed(1)}/${weakest.max} net)
+                    <em>Bu derste hedefine %${(100 - weakest.percent).toFixed(1)} kaldı. Ekstra çalışma ile kısa sürede yükseliş sağlayabilirsin!</em>
+                </div>
+            `;
+            
+            // Orta seviye dersler
+            const moderate = subjects.filter(s => s.percent >= 50 && s.percent < 80);
+            if (moderate.length > 0) {
+                html += `
+                    <div class="insight-item">
+                        <strong>📊 İyi Giden Ama Geliştirilebilir Dersler:</strong>
+                        <br>${moderate.map(s => `${s.name} (%${s.percent.toFixed(1)})`).join(', ')}
+                        <em>Bu derslerde biraz daha emek vererek %80+ başarıya ulaşabilirsin!</em>
+                    </div>
+                `;
+            }
+            
+            // Trend analizi
+            const mathTrend = analyzeTrend(currentStudent.matematik);
+            const turkishTrend = analyzeTrend(currentStudent.turkce);
+            
+            if (mathTrend > 5) {
+                html += `
+                    <div class="insight-item">
+                        <strong>📈 Matematik'te Harika Yükseliş!</strong>
+                        <br>Son sınavlarda matematik performansında belirgin artış var. 
+                        <em>Bu çalışma düzenini sürdür!</em>
+                    </div>
+                `;
+            }
+            
+            if (turkishTrend > 5) {
+                html += `
+                    <div class="insight-item">
+                        <strong>📈 Türkçe'de Güzel İlerleme!</strong>
+                        <br>Türkçe netlerin yükselişte. 
+                        <em>Okuma alışkanlığın meyve veriyor!</em>
+                    </div>
+                `;
+            }
+            
+            // Genel değerlendirme
+            const totalPercent = (
+                currentStudent.turkce_yuzde + 
+                currentStudent.matematik_yuzde + 
+                currentStudent.fen_yuzde + 
+                currentStudent.sosyal_yuzde + 
+                currentStudent.ingilizce_yuzde + 
+                currentStudent.din_yuzde
+            ) / 6;
+            
+            let performanceMsg = '';
+            if (totalPercent >= 80) {
+                performanceMsg = 'Mükemmel! LGS için çok iyi bir yoldasın! 🎉';
+            } else if (totalPercent >= 60) {
+                performanceMsg = 'İyi gidiyorsun! Biraz daha çaba ile hedefine ulaşacaksın! 💪';
+            } else if (totalPercent >= 40) {
+                performanceMsg = 'Orta seviyedesin. Programlı çalışma ile çok daha iyi yerlere gelebilirsin! 📚';
+            } else {
+                performanceMsg = 'Henüz potansiyelini gösteremedin. Ama endişelenme, doğru strateji ile kısa sürede gelişim sağlanabilir! 🚀';
+            }
+            
+            html += `
+                <div class="insight-item">
+                    <strong>🎯 Genel Başarı Oranı: %${totalPercent.toFixed(1)}</strong>
+                    <br>${performanceMsg}
+                    <em>Tüm dersler toplamda: ${(
+                        currentStudent.turkce_ort + 
+                        currentStudent.matematik_ort + 
+                        currentStudent.fen_ort + 
+                        currentStudent.sosyal_ort + 
+                        currentStudent.ingilizce_ort + 
+                        currentStudent.din_ort
+                    ).toFixed(1)} / 90 net</em>
+                </div>
+            `;
+            
+            content.innerHTML = html;
+        }
+        
+        /* ===================== PROFİL MODAL ===================== */
+        const profileColors = {
+            turkce:    { main: 'rgba(231, 76, 60, 1)',   bg: 'rgba(231, 76, 60, 0.15)',  label: '📖 Türkçe',    max: 20 },
+            matematik: { main: 'rgba(52, 152, 219, 1)',  bg: 'rgba(52, 152, 219, 0.15)', label: '🔢 Matematik', max: 20 },
+            fen:       { main: 'rgba(46, 204, 113, 1)',  bg: 'rgba(46, 204, 113, 0.15)', label: '🔬 Fen',       max: 20 },
+            sosyal:    { main: 'rgba(243, 156, 18, 1)',  bg: 'rgba(243, 156, 18, 0.15)', label: '🌍 Sosyal',    max: 10 },
+            ingilizce: { main: 'rgba(155, 89, 182, 1)',  bg: 'rgba(155, 89, 182, 0.15)', label: '🌐 İngilizce', max: 10 },
+            din:       { main: 'rgba(26, 188, 156, 1)',  bg: 'rgba(26, 188, 156, 0.15)', label: '📿 Din',       max: 10 }
+        };
+
+        function openProfile() {
+            const s = currentStudent;
+
+            document.getElementById('modalStudentName').textContent = `👤 ${s.name}`;
+            const totalAvg = (s.turkce_yuzde + s.matematik_yuzde + s.fen_yuzde + s.sosyal_yuzde + s.ingilizce_yuzde + s.din_yuzde) / 6;
+            document.getElementById('modalStudentMeta').textContent =
+                `${s.class} Sınıfı  ·  Genel Başarı: %${totalAvg.toFixed(1)}`;
+
+            const grid = document.getElementById('profileChartsGrid');
+            grid.innerHTML = '';
+
+            const subjects = ['turkce', 'matematik', 'fen', 'sosyal', 'ingilizce', 'din'];
+
+            subjects.forEach(key => {
+                const c = profileColors[key];
+                const netsFull  = s[key + '_full'];   // None dahil 18 eleman
+                const netsClean = s[key];              // Sadece sayısal
+                const avg = s[key + '_ort'];
+                const pct = s[key + '_yuzde'];
+
+                // En yüksek / düşük (clean üzerinden)
+                const maxVal = netsClean.length ? Math.max(...netsClean) : 0;
+                const minVal = netsClean.length ? Math.min(...netsClean) : 0;
+
+                // Trend
+                let trendText = '—', trendColor = '#888';
+                if (netsClean.length >= 4) {
+                    const firstAvg = netsClean.slice(0, 3).reduce((a,b) => a+b, 0) / 3;
+                    const lastAvg  = netsClean.slice(-3).reduce((a,b) => a+b, 0) / 3;
+                    const diff = lastAvg - firstAvg;
+                    if (diff > 0.5)       { trendText = `↗ +${diff.toFixed(1)}`; trendColor = '#2ecc71'; }
+                    else if (diff < -0.5) { trendText = `↘ ${diff.toFixed(1)}`;  trendColor = '#e74c3c'; }
+                    else                  { trendText = '→ Stabil';               trendColor = '#f39c12'; }
+                }
+
+                // Her sınav kartı — 18 sınavın hepsi gösterilir
+                const examBadges = netsFull.map((net, i) => {
+                    if (net === null) {
+                        // Girmeyen sınav
+                        return `
+                            <div style="
+                                background:#f0f0f0; color:#bbb;
+                                border:2px dashed #ddd; border-radius:10px;
+                                padding:6px 4px; text-align:center; min-width:44px;
+                            ">
+                                <div style="font-size:0.7em; font-weight:600;">S${i+1}</div>
+                                <div style="font-size:0.85em; font-weight:600;">G</div>
+                            </div>`;
+                    }
+                    const isAboveAvg = net >= avg;
+                    const isMax = net === maxVal;
+                    const isMin = net === minVal;
+                    const bg    = isAboveAvg ? '#d4f5e2' : '#fde8e8';
+                    const color = isAboveAvg ? '#1a7a4a' : '#c0392b';
+                    const border = isMax ? '2px solid #2ecc71' : isMin ? '2px solid #e74c3c' : '2px solid transparent';
+                    return `
+                        <div style="
+                            background:${bg}; color:${color};
+                            border:${border}; border-radius:10px;
+                            padding:6px 4px; text-align:center; min-width:44px;
+                        ">
+                            <div style="font-size:0.7em; color:#888; font-weight:600;">S${i+1}</div>
+                            <div style="font-size:1em; font-weight:700;">${net.toFixed(1)}</div>
+                        </div>`;
+                }).join('');
+
+                const card = document.createElement('div');
+                card.className = `profile-chart-card ${key}`;
+                card.innerHTML = `
+                    <h4>${c.label}
+                        <span style="font-weight:400;font-size:0.85em;color:#888">
+                            · Ort: ${avg.toFixed(1)}/${c.max} · %${pct.toFixed(0)}
+                        </span>
+                    </h4>
+                    <div style="display:flex; flex-wrap:wrap; gap:5px; margin-bottom:10px;">
+                        ${examBadges}
+                    </div>
+                    <div style="display:flex; justify-content:space-between; font-size:0.8em; color:#555; border-top:1px solid #e0e0e0; padding-top:8px;">
+                        <span>⬆️ En yüksek: <strong>${maxVal.toFixed(1)}</strong></span>
+                        <span>⬇️ En düşük: <strong>${minVal.toFixed(1)}</strong></span>
+                        <span style="color:${trendColor}; font-weight:700;">${trendText}</span>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+
+            document.getElementById('profileModal').classList.add('open');
+        }
+
+        function closeProfile() {
+            document.getElementById('profileModal').classList.remove('open');
+        }
+
+        // Modal dışına tıklayınca kapat
+        document.addEventListener('click', function(e) {
+            if (e.target.id === 'profileModal') closeProfile();
+        });
+
+        /* ======================================================== */
+
+        function analyzeTrend(nets) {
+            if (nets.length < 4) return 0;
+            
+            const recent = nets.slice(-3);
+            const earlier = nets.slice(0, Math.min(3, nets.length - 3));
+            
+            if (earlier.length === 0) return 0;
+            
+            const recentAvg = recent.reduce((a, b) => a + b, 0) / recent.length;
+            const earlierAvg = earlier.reduce((a, b) => a + b, 0) / earlier.length;
+            
+            return recentAvg - earlierAvg;
+        }
+    </script>
+</body>
+</html>
